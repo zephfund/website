@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zephyr RPC Call</title>
+</head>
+<body>
+    <h3>Zephyr Daemon RPC Response</h3>
+    <pre id="response">Waiting for response...</pre>
+
+    <script>
+        async function callZephyrRPC() {
+            try {
+                const response = await fetch('http://localhost:17767/json_rpc', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        jsonrpc: '2.0',
+                        id: '0',
+                        method: 'get_audited_supply',
+                        params: null
+                    })
+                });
+                const data = await response.json();
+                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
+            } catch (error) {
+                document.getElementById('response').innerText = 'Error: ' + error.message;
+            }
+        }
+        
+        callZephyrRPC();
+    </script>
+</body>
+</html>
