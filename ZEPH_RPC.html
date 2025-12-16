@@ -13,7 +13,7 @@
         async function callZephyrRPC() {
             try {
                 // Use a CORS proxy service or your own proxy
-                const targetUrl = 'https://remote-node.zephyrprotocol.com:17767/json_rpc';
+                const targetUrl = 'http://remote-node.zephyrprotocol.com:17767/json_rpc';
                 
                 const response = await fetch(targetUrl, {
                     method: 'POST',
@@ -41,6 +41,7 @@
 </body>
 
 </html>
+
 
 
 
