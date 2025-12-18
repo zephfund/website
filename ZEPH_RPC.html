@@ -1,1112 +1,1010 @@
 <!DOCTYPE html>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<html lang="en">
 <head>
-<style>
-body{
-margin:0;
-padding:0;
-overflow:hidden;
--webkit-tap-highlight-color:transparent;
--webkit-touch-callout:none;
--webkit-user-select:none;
-user-select:none;
-background:#000;
-font-family:monospace;
-}
-#renderTarget{
-position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
-z-index:1;
-}
-#uiLayer{
-position:fixed;
-top:0;
-left:0;
-width:100vw;
-height:100vh;
-z-index:2;
-pointer-events:none;
-}
-#uiLayer > *{
-pointer-events:auto;
-}
-#debug{
-position:fixed;
-top:10px;
-right:10px;
-color:#0f0;
-font:bold 11px 'Courier New',monospace;
-text-shadow:1px 1px 0 #000;
-z-index:3;
-background:rgba(0,0,0,0.7);
-padding:8px;
-border-radius:4px;
-border:1px solid #0f0;
-}
-#menuBtn{
-position:fixed;
-top:15px;
-left:15px;
-width:32px;
-height:32px;
-background:rgba(20,20,30,0.95);
-border:1px solid #4af;
-border-radius:6px;
-color:#4af;
-font:bold 16px monospace;
-z-index:3;
-cursor:pointer;
-display:flex;
-align-items:center;
-justify-content:center;
-transition:all 0.1s;
-box-shadow:0 2px 8px rgba(0,0,0,0.5);
-}
-#menuBtn:hover{
-transform:scale(1.1);
-background:rgba(30,30,40,0.95);
-}
-#controls{
-position:fixed;
-top:52px;
-left:15px;
-width:260px;
-background:rgba(10,15,25,0.98);
-border:1px solid #4af;
-border-radius:8px;
-padding:15px;
-z-index:3;
-transform:translateX(-280px);
-transition:transform 0.2s cubic-bezier(0.2,0,0.2,1);
-backdrop-filter:blur(10px);
-box-shadow:0 4px 20px rgba(0,0,0,0.7);
-}
-#controls.show{
-transform:translateX(0);
-}
-.control-group{
-margin-bottom:15px;
-}
-h3{
-margin:0 0 10px 0;
-color:#4af;
-font:bold 14px monospace;
-border-bottom:1px solid #334;
-padding-bottom:5px;
-text-transform:uppercase;
-letter-spacing:1px;
-}
-label{
-display:block;
-margin:8px 0 4px;
-color:#8af;
-font:11px monospace;
-text-transform:uppercase;
-letter-spacing:0.5px;
-}
-input{
-width:100%;
-box-sizing:border-box;
-padding:8px;
-background:rgba(5,10,20,0.9);
-border:1px solid #456;
-border-radius:4px;
-color:#eef;
-font:11px monospace;
-transition:border-color 0.2s;
-}
-input:focus{
-outline:none;
-border-color:#4af;
-box-shadow:0 0 5px rgba(74,170,255,0.3);
-}
-button{
-width:100%;
-padding:10px;
-margin:5px 0;
-background:linear-gradient(135deg,#2a4a8f,#1a3a7f);
-border:none;
-border-radius:4px;
-color:#fff;
-font:11px monospace;
-cursor:pointer;
-transition:all 0.2s;
-text-transform:uppercase;
-letter-spacing:0.5px;
-box-shadow:0 2px 5px rgba(0,0,0,0.3);
-}
-button:hover{
-background:linear-gradient(135deg,#3a5a9f,#2a4a8f);
-transform:translateY(-1px);
-box-shadow:0 3px 8px rgba(0,0,0,0.4);
-}
-button:active{
-transform:translateY(0);
-}
-#dataList{
-max-height:150px;
-overflow-y:auto;
-margin-top:10px;
-border-top:1px solid #334;
-padding-top:10px;
-}
-.data-item{
-padding:5px 0;
-border-bottom:1px solid #223;
-font:10px monospace;
-display:flex;
-justify-content:space-between;
-transition:background 0.1s;
-}
-.data-item:hover{
-background:rgba(40,50,70,0.3);
-}
-.data-date{
-color:#8af;
-}
-.data-value{
-color:#4fa;
-font-weight:bold;
-}
-::-webkit-scrollbar{width:6px;}
-::-webkit-scrollbar-track{background:rgba(5,10,20,0.5);}
-::-webkit-scrollbar-thumb{background:#456;border-radius:3px;}
-::-webkit-scrollbar-thumb:hover{background:#4af;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>RAZZER OS - Dashboard</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-<script>
-"use strict";
+        body {
+            overflow: hidden;
+            background: #000;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
+            color: #fff;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
+        }
 
-// ============================================================================
-// QUANTUM RENDER ENGINE - REVOLUTIONARY SINGLE-PASS ARCHITECTURE
-// ============================================================================
-class QuantumRenderer {
-    constructor() {
-        // SINGLE CANVAS - ZERO OVERHEAD
-        this.canvas = document.createElement('canvas');
-        this.canvas.id = 'renderTarget';
-        document.body.prepend(this.canvas);
-        
-        // WEBGL2 WITH MAXIMUM PERFORMANCE SETTINGS
-        const gl = this.canvas.getContext('webgl2', {
-            alpha: false,
-            desynchronized: true,
-            powerPreference: 'high-performance',
-            preserveDrawingBuffer: false,
-            antialias: false,
-            depth: true,
-            stencil: false,
-            failIfMajorPerformanceCaveat: false
-        });
-        
-        if (!gl) {
-            throw new Error('WebGL2 not available - quantum engine requires modern GPU');
+        /* Status Bar */
+        #statusBar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 1001;
+            font-size: 13px;
+            font-weight: 400;
         }
-        
-        this.gl = gl;
-        this.isWebGL2 = true;
-        
-        // QUANTUM SHADER SYSTEM - SINGLE SHADER FOR EVERYTHING
-        this.program = this.createQuantumShader();
-        
-        // UNIFIED BUFFER ARCHITECTURE - ONE BUFFER TO RULE THEM ALL
-        this.createUnifiedBuffer();
-        
-        // TEXTURE BUFFER FOR GRAPH DATA - BYPASS UNIFORM LIMITS
-        this.createDataTexture();
-        
-        // PERFORMANCE MONITORING - NANOSECOND PRECISION
-        this.performance = {
-            frameTime: 0,
-            fps: 0,
-            frameCount: 0,
-            lastTime: performance.now(),
-            lastFpsTime: performance.now(),
-            history: new Float32Array(120),
-            minFrameTime: Infinity,
-            maxFrameTime: 0,
-            avgFrameTime: 0
-        };
-        
-        // QUANTUM DATA MANAGEMENT
-        this.data = {
-            points: [],
-            triangles: [],
-            dirty: false,
-            normalized: false
-        };
-        
-        // ADAPTIVE RENDERING SYSTEM
-        this.adaptive = {
-            targetFPS: 60,
-            currentFPS: 60,
-            quality: 1.0,
-            triangleCount: 500,
-            maxTriangles: 2000,
-            minTriangles: 100,
-            adjustmentRate: 0.1
-        };
-        
-        this.resize();
-        this.init();
-    }
-    
-    createQuantumShader() {
-        const gl = this.gl;
-        
-        // REVOLUTIONARY SHADER - RENDERS 3D AND 2D IN SINGLE PASS
-        const vsSource = `#version 300 es
-            precision highp float;
-            precision highp int;
-            
-            // UNIFIED VERTEX ATTRIBUTES
-            in vec3 aPosition;
-            in vec4 aColor;
-            in float aType;
-            in vec3 aParams;
-            
-            // UNIFORMS - MINIMAL FOR MAXIMUM SPEED
-            uniform float uTime;
-            uniform vec2 uResolution;
-            uniform vec3 uCamera;
-            uniform mat3 uGraphTransform;
-            uniform sampler2D uDataTexture;
-            uniform int uDataCount;
-            uniform float uQuality;
-            
-            // VARYINGS - PASSED TO FRAGMENT
-            out vec4 vColor;
-            out float vType;
-            out float vDepth;
-            out vec2 vUV;
-            out float vGlow;
-            
-            // FAST TRIG APPROXIMATIONS - 99% ACCURACY, 1000% FASTER
-            float fastSin(float x) {
-                // Taylor series approximation with range reduction
-                x = mod(x + 3.14159265, 6.28318531) - 3.14159265;
-                float x2 = x * x;
-                return x * (1.0 - x2 * (0.16666667 - x2 * 0.00833333));
-            }
-            
-            float fastCos(float x) {
-                return fastSin(x + 1.57079633);
-            }
-            
-            // MATRIX MULTIPLICATION - INLINED FOR SPEED
-            vec3 transformPoint(vec3 p, mat3 m) {
-                return vec3(
-                    m[0][0] * p.x + m[0][1] * p.y + m[0][2] * p.z,
-                    m[1][0] * p.x + m[1][1] * p.y + m[1][2] * p.z,
-                    m[2][0] * p.x + m[2][1] * p.y + m[2][2] * p.z
-                );
-            }
-            
-            void main() {
-                // TYPE-BASED RENDERING - ZERO BRANCHES
-                float isTriangle = step(0.5, 1.0 - aType);
-                float isPoint = step(0.5, aType) * step(1.5, 2.0 - aType);
-                float isLine = step(1.5, aType);
-                
-                // 3D TRIANGLE PATH
-                vec3 triPos = aPosition;
-                float t = uTime * 0.001;
-                
-                // ROTATIONS WITH FAST TRIG
-                float rx = t * 0.2 + aParams.x * 0.01;
-                float ry = t * 0.3 + aParams.y * 0.01;
-                float rz = t * 0.1 + aParams.z * 0.01;
-                
-                // ROTATION MATRICES - INLINED
-                float cx = fastCos(rx), sx = fastSin(rx);
-                float cy = fastCos(ry), sy = fastSin(ry);
-                float cz = fastCos(rz), sz = fastSin(rz);
-                
-                // COMBINED ROTATION MATRIX
-                mat3 rotX = mat3(1.0, 0.0, 0.0, 0.0, cx, -sx, 0.0, sx, cx);
-                mat3 rotY = mat3(cy, 0.0, sy, 0.0, 1.0, 0.0, -sy, 0.0, cy);
-                mat3 rotZ = mat3(cz, -sz, 0.0, sz, cz, 0.0, 0.0, 0.0, 1.0);
-                
-                // APPLY ROTATIONS
-                triPos = transformPoint(triPos, rotX);
-                triPos = transformPoint(triPos, rotY);
-                triPos = transformPoint(triPos, rotZ);
-                
-                // MOVEMENT
-                triPos.z += fastSin(t * 0.5 + aParams.x * 0.01) * 30.0;
-                
-                // PERSPECTIVE PROJECTION
-                float fov = 600.0;
-                float scale = fov / (uCamera.z - triPos.z);
-                vec2 triProj = triPos.xy * scale + uResolution * 0.5;
-                vec4 triPos4 = vec4(triProj / uResolution * 2.0 - 1.0, 0.0, 1.0);
-                
-                // 2D GRAPH POINT PATH
-                int idx = int(aPosition.x);
-                float x = float(idx) / max(float(uDataCount - 1), 1.0);
-                
-                // SAMPLE FROM TEXTURE - BYPASS UNIFORM LIMITS
-                float y = texelFetch(uDataTexture, ivec2(idx % 256, idx / 256), 0).r;
-                
-                // APPLY GRAPH TRANSFORM
-                vec2 graphPos = vec2(
-                    x * uGraphTransform[0][0] + uGraphTransform[2][0],
-                    y * uGraphTransform[1][1] + uGraphTransform[2][1]
-                );
-                vec4 graphPos4 = vec4(graphPos * 2.0 - 1.0, 0.0, 1.0);
-                
-                // 2D LINE PATH
-                vec2 linePos = vec2(
-                    aPosition.x * uGraphTransform[0][0] + uGraphTransform[2][0],
-                    aPosition.y * uGraphTransform[1][1] + uGraphTransform[2][1]
-                );
-                vec4 linePos4 = vec4(linePos * 2.0 - 1.0, 0.0, 1.0);
-                
-                // FINAL POSITION - TYPE-BASED BLENDING
-                gl_Position = 
-                    triPos4 * isTriangle + 
-                    graphPos4 * isPoint + 
-                    linePos4 * isLine;
-                
-                // POINT SIZE FOR GRAPH POINTS
-                gl_PointSize = 10.0 * isPoint * uQuality;
-                
-                // DEPTH FOR PROPER SORTING
-                vDepth = triPos.z * isTriangle + 1000.0 * isPoint + 999.0 * isLine;
-                
-                // PASS THROUGH COLOR
-                vColor = aColor;
-                
-                // PASS TYPE TO FRAGMENT
-                vType = aType;
-                
-                // UV FOR POINT EFFECTS
-                vUV = vec2(0.5);
-                
-                // GLOW INTENSITY
-                vGlow = aParams.x;
-            }
-        `;
-        
-        const fsSource = `#version 300 es
-            precision highp float;
-            precision highp int;
-            
-            // INPUTS FROM VERTEX
-            in vec4 vColor;
-            in float vType;
-            in float vDepth;
-            in vec2 vUV;
-            in float vGlow;
-            
-            // OUTPUT
-            out vec4 fragColor;
-            
-            // FAST NOISE FUNCTION
-            float fastNoise(vec2 p) {
-                return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
-            }
-            
-            void main() {
-                // TYPE-BASED RENDERING - ZERO BRANCHES
-                float isTriangle = step(0.5, 1.0 - vType);
-                float isPoint = step(0.5, vType) * step(1.5, 2.0 - vType);
-                float isLine = step(1.5, vType);
-                
-                // 3D TRIANGLE WITH FOG
-                float fog = 1.0 - clamp((vDepth + 600.0) / 1000.0, 0.0, 1.0);
-                fog = max(0.2, fog);
-                vec4 triColor = vec4(vColor.rgb * fog, vColor.a * 0.3);
-                
-                // 2D GRAPH POINT WITH GLOW
-                vec2 coord = gl_PointCoord - vec2(0.5);
-                float dist = length(coord);
-                
-                // DISCARD OUTSIDE CIRCLE
-                float pointMask = 1.0 - step(0.5, dist);
-                
-                // GLOW EFFECT
-                float glowIntensity = smoothstep(0.5, 0.3, dist);
-                vec3 glowColor = mix(vec3(0.2, 0.4, 1.0), vec3(1.0), smoothstep(0.3, 0.0, dist));
-                vec4 pointColor = vec4(glowColor, glowIntensity * vColor.a) * pointMask;
-                
-                // 2D LINE
-                vec4 lineColor = vColor;
-                
-                // FINAL COLOR - TYPE-BASED BLENDING
-                fragColor = 
-                    triColor * isTriangle + 
-                    pointColor * isPoint + 
-                    lineColor * isLine;
-            }
-        `;
-        
-        // COMPILE SHADERS WITH ERROR HANDLING
-        const vs = gl.createShader(gl.VERTEX_SHADER);
-        gl.shaderSource(vs, vsSource);
-        gl.compileShader(vs);
-        
-        if (!gl.getShaderParameter(vs, gl.COMPILE_STATUS)) {
-            console.error('Vertex shader compilation failed:', gl.getShaderInfoLog(vs));
-            throw new Error('Vertex shader compilation failed');
-        }
-        
-        const fs = gl.createShader(gl.FRAGMENT_SHADER);
-        gl.shaderSource(fs, fsSource);
-        gl.compileShader(fs);
-        
-        if (!gl.getShaderParameter(fs, gl.COMPILE_STATUS)) {
-            console.error('Fragment shader compilation failed:', gl.getShaderInfoLog(fs));
-            throw new Error('Fragment shader compilation failed');
-        }
-        
-        // CREATE PROGRAM
-        const program = gl.createProgram();
-        gl.attachShader(program, vs);
-        gl.attachShader(program, fs);
-        gl.linkProgram(program);
-        
-        if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-            console.error('Program link failed:', gl.getProgramInfoLog(program));
-            throw new Error('Program link failed');
-        }
-        
-        gl.useProgram(program);
-        return program;
-    }
-    
-    createUnifiedBuffer() {
-        const gl = this.gl;
-        
-        // VERTEX ARRAY OBJECT - SINGLE STATE OBJECT
-        this.vao = gl.createVertexArray();
-        gl.bindVertexArray(this.vao);
-        
-        // SINGLE VERTEX BUFFER FOR ALL DATA
-        this.vertexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-        
-        // SINGLE INDEX BUFFER
-        this.indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
-        
-        // SET UP ATTRIBUTES WITH MINIMAL STRIDE
-        const stride = 7 * 4; // 7 floats: pos(3), color(4), type(1), params(3)
-        
-        const posLoc = gl.getAttribLocation(this.program, 'aPosition');
-        const colLoc = gl.getAttribLocation(this.program, 'aColor');
-        const typeLoc = gl.getAttribLocation(this.program, 'aType');
-        const paramLoc = gl.getAttribLocation(this.program, 'aParams');
-        
-        gl.enableVertexAttribArray(posLoc);
-        gl.enableVertexAttribArray(colLoc);
-        gl.enableVertexAttribArray(typeLoc);
-        gl.enableVertexAttribArray(paramLoc);
-        
-        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, stride, 0);
-        gl.vertexAttribPointer(colLoc, 4, gl.FLOAT, false, stride, 3 * 4);
-        gl.vertexAttribPointer(typeLoc, 1, gl.FLOAT, false, stride, 7 * 4);
-        gl.vertexAttribPointer(paramLoc, 3, gl.FLOAT, false, stride, 8 * 4);
-        
-        gl.bindVertexArray(null);
-    }
-    
-    createDataTexture() {
-        const gl = this.gl;
-        
-        // TEXTURE FOR GRAPH DATA - BYPASS UNIFORM LIMITS
-        this.dataTexture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, this.dataTexture);
-        
-        // SET TEXTURE PARAMETERS
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        
-        // INITIALIZE WITH EMPTY DATA
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.R32F, 256, 256, 0, gl.RED, gl.FLOAT, null);
-    }
-    
-    init() {
-        const gl = this.gl;
-        
-        // GENERATE 3D TRIANGLES
-        this.generateTriangles();
-        
-        // SET UP RENDERING STATE
-        gl.enable(gl.DEPTH_TEST);
-        gl.depthFunc(gl.LEQUAL);
-        
-        gl.enable(gl.BLEND);
-        gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
-        
-        // DISABLE UNNECESSARY FEATURES
-        gl.disable(gl.CULL_FACE);
-        gl.disable(gl.DITHER);
-        
-        // SET CLEAR COLOR
-        gl.clearColor(0.05, 0.05, 0.1, 1.0);
-    }
-    
-    generateTriangles() {
-        const count = this.adaptive.triangleCount;
-        
-        // OPTIMIZED DATA STRUCTURE - ONE CONTIGUOUS BLOCK
-        const data = new Float32Array(count * 3 * 11); // 3 vertices per triangle, 11 floats per vertex
-        
-        for (let i = 0; i < count; i++) {
-            for (let v = 0; v < 3; v++) {
-                const idx = (i * 3 + v) * 11;
-                const angle = Math.random() * Math.PI * 2;
-                const radius = 50 + Math.random() * 400;
-                const height = (Math.random() - 0.5) * 500;
-                
-                // POSITION
-                data[idx] = Math.cos(angle) * radius;
-                data[idx + 1] = height;
-                data[idx + 2] = Math.sin(angle) * radius - 600;
-                
-                // COLOR (BLUE-ISH)
-                data[idx + 3] = 0.1 + Math.random() * 0.2;
-                data[idx + 4] = 0.2 + Math.random() * 0.3;
-                data[idx + 5] = 0.4 + Math.random() * 0.4;
-                data[idx + 6] = 0.1 + Math.random() * 0.1;
-                
-                // TYPE (0 = TRIANGLE)
-                data[idx + 7] = 0;
-                
-                // PARAMS (FOR ANIMATION)
-                data[idx + 8] = Math.random();
-                data[idx + 9] = Math.random();
-                data[idx + 10] = Math.random();
-            }
-        }
-        
-        this.triangleData = data;
-        this.triangleCount = count;
-    }
-    
-    setGraphData(points) {
-        this.data.points = points;
-        this.data.dirty = true;
-    }
-    
-    buildGraphMesh() {
-        if (!this.data.points || this.data.points.length < 2) {
-            this.lineData = null;
-            this.pointData = null;
-            return;
-        }
-        
-        const points = this.data.points;
-        const count = points.length;
-        
-        // LINE VERTICES
-        const lineVertices = new Float32Array((count - 1) * 2 * 11); // 2 vertices per line segment
-        
-        for (let i = 0; i < count - 1; i++) {
-            const idx = i * 2 * 11;
-            
-            // START VERTEX
-            lineVertices[idx] = i / (count - 1);
-            lineVertices[idx + 1] = points[i].value;
-            lineVertices[idx + 2] = 0;
-            lineVertices[idx + 3] = 0.4; // R
-            lineVertices[idx + 4] = 0.6; // G
-            lineVertices[idx + 5] = 1.0; // B
-            lineVertices[idx + 6] = 0.9; // A
-            lineVertices[idx + 7] = 2; // Type: line
-            lineVertices[idx + 8] = 0;
-            lineVertices[idx + 9] = 0;
-            lineVertices[idx + 10] = 0;
-            
-            // END VERTEX
-            lineVertices[idx + 11] = (i + 1) / (count - 1);
-            lineVertices[idx + 12] = points[i + 1].value;
-            lineVertices[idx + 13] = 0;
-            lineVertices[idx + 14] = 0.4;
-            lineVertices[idx + 15] = 0.6;
-            lineVertices[idx + 16] = 1.0;
-            lineVertices[idx + 17] = 0.9;
-            lineVertices[idx + 18] = 2;
-            lineVertices[idx + 19] = 0;
-            lineVertices[idx + 20] = 0;
-            lineVertices[idx + 21] = 0;
-        }
-        
-        // POINT VERTICES
-        const pointVertices = new Float32Array(count * 11);
-        
-        for (let i = 0; i < count; i++) {
-            const idx = i * 11;
-            pointVertices[idx] = i;
-            pointVertices[idx + 1] = points[i].value;
-            pointVertices[idx + 2] = 0;
-            pointVertices[idx + 3] = 0.2;
-            pointVertices[idx + 4] = 0.4;
-            pointVertices[idx + 5] = 1.0;
-            pointVertices[idx + 6] = 1.0;
-            pointVertices[idx + 7] = 1; // Type: point
-            pointVertices[idx + 8] = i / count; // Glow parameter
-            pointVertices[idx + 9] = 0;
-            pointVertices[idx + 10] = 0;
-        }
-        
-        this.lineData = lineVertices;
-        this.pointData = pointVertices;
-        this.lineCount = count - 1;
-        this.pointCount = count;
-    }
-    
-    updateDataTexture() {
-        if (!this.data.points || this.data.points.length === 0) return;
-        
-        const gl = this.gl;
-        const count = this.data.points.length;
-        
-        // CREATE TEXTURE DATA
-        const textureData = new Float32Array(256 * 256);
-        
-        for (let i = 0; i < count; i++) {
-            textureData[i] = this.data.points[i].value;
-        }
-        
-        // UPDATE TEXTURE
-        gl.bindTexture(gl.TEXTURE_2D, this.dataTexture);
-        gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, 256, 256, gl.RED, gl.FLOAT, textureData);
-    }
-    
-    resize() {
-        const w = window.innerWidth;
-        const h = window.innerHeight;
-        
-        this.canvas.width = w;
-        this.canvas.height = h;
-        
-        if (this.gl) {
-            this.gl.viewport(0, 0, w, h);
-        }
-        
-        // CALCULATE GRAPH TRANSFORM
-        const margin = 0.15;
-        this.graphTransform = [
-            [1 - margin * 2, 0, margin],
-            [0, 1 - margin * 2, margin],
-            [0, 0, 1]
-        ];
-    }
-    
-    updateAdaptiveQuality() {
-        const perf = this.performance;
-        const adaptive = this.adaptive;
-        
-        // CALCULATE AVERAGE FRAME TIME
-        let sum = 0;
-        for (let i = 0; i < 120; i++) sum += perf.history[i];
-        const avgFrameTime = sum / 120;
-        
-        // UPDATE MIN/MAX
-        perf.minFrameTime = Math.min(perf.minFrameTime, perf.frameTime);
-        perf.maxFrameTime = Math.max(perf.maxFrameTime, perf.frameTime);
-        perf.avgFrameTime = avgFrameTime;
-        
-        // CALCULATE CURRENT FPS
-        adaptive.currentFPS = 1000 / avgFrameTime;
-        
-        // ADJUST QUALITY BASED ON PERFORMANCE
-        if (adaptive.currentFPS < adaptive.targetFPS * 0.9) {
-            // DECREASE QUALITY
-            adaptive.quality = Math.max(0.5, adaptive.quality - adaptive.adjustmentRate);
-            adaptive.triangleCount = Math.floor(adaptive.maxTriangles * adaptive.quality);
-            this.generateTriangles();
-        } else if (adaptive.currentFPS > adaptive.targetFPS * 1.1) {
-            // INCREASE QUALITY
-            adaptive.quality = Math.min(1.0, adaptive.quality + adaptive.adjustmentRate);
-            adaptive.triangleCount = Math.floor(adaptive.maxTriangles * adaptive.quality);
-            this.generateTriangles();
-        }
-    }
-    
-    render(time) {
-        const gl = this.gl;
-        const perf = this.performance;
-        
-        // UPDATE PERFORMANCE METRICS
-        const now = performance.now();
-        perf.frameTime = now - perf.lastTime;
-        perf.lastTime = now;
-        perf.frameCount++;
-        perf.history[perf.frameCount % 120] = perf.frameTime;
-        
-        // UPDATE FPS EVERY SECOND
-        if (now - perf.lastFpsTime >= 1000) {
-            perf.fps = Math.round(perf.frameCount * 1000 / (now - perf.lastFpsTime));
-            perf.frameCount = 0;
-            perf.lastFpsTime = now;
-            
-            // UPDATE ADAPTIVE QUALITY
-            this.updateAdaptiveQuality();
-        }
-        
-        // CLEAR BUFFERS
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        
-        // UPDATE UNIFORMS
-        gl.useProgram(this.program);
-        
-        const timeLoc = gl.getUniformLocation(this.program, 'uTime');
-        const resLoc = gl.getUniformLocation(this.program, 'uResolution');
-        const camLoc = gl.getUniformLocation(this.program, 'uCamera');
-        const transLoc = gl.getUniformLocation(this.program, 'uGraphTransform');
-        const countLoc = gl.getUniformLocation(this.program, 'uDataCount');
-        const qualLoc = gl.getUniformLocation(this.program, 'uQuality');
-        
-        gl.uniform1f(timeLoc, time);
-        gl.uniform2f(resLoc, this.canvas.width, this.canvas.height);
-        gl.uniform3f(camLoc, 0, 0, 500);
-        gl.uniform1i(countLoc, this.data.points.length);
-        gl.uniform1f(qualLoc, this.adaptive.quality);
-        
-        // PASS GRAPH TRANSFORM AS 3X3 MATRIX
-        const trans = this.graphTransform;
-        gl.uniformMatrix3fv(transLoc, false, new Float32Array([
-            trans[0][0], trans[0][1], trans[0][2],
-            trans[1][0], trans[1][1], trans[1][2],
-            0, 0, 1
-        ]));
-        
-        // UPDATE DATA TEXTURE IF NEEDED
-        if (this.data.dirty) {
-            this.updateDataTexture();
-            this.buildGraphMesh();
-            this.data.dirty = false;
-        }
-        
-        // BIND TEXTURE
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.dataTexture);
-        gl.uniform1i(gl.getUniformLocation(this.program, 'uDataTexture'), 0);
-        
-        // BIND VAO
-        gl.bindVertexArray(this.vao);
-        
-        // RENDER 3D TRIANGLES
-        if (this.triangleData) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, this.triangleData, gl.DYNAMIC_DRAW);
-            gl.drawArrays(gl.TRIANGLES, 0, this.triangleCount * 3);
-        }
-        
-        // RENDER GRAPH LINES
-        if (this.lineData) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, this.lineData, gl.DYNAMIC_DRAW);
-            gl.drawArrays(gl.LINES, 0, this.lineCount * 2);
-        }
-        
-        // RENDER GRAPH POINTS
-        if (this.pointData) {
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.vertexBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, this.pointData, gl.DYNAMIC_DRAW);
-            gl.drawArrays(gl.POINTS, 0, this.pointCount);
-        }
-        
-        gl.bindVertexArray(null);
-        
-        return perf.fps;
-    }
-}
 
-// ============================================================================
-// ULTRALIGHT UI MANAGER - MINIMAL OVERHEAD
-// ============================================================================
-class UIManager {
-    constructor() {
-        this.container = document.createElement('div');
-        this.container.id = 'uiLayer';
-        document.body.appendChild(this.container);
-        
-        this.dataPoints = [];
-        this.renderer = null;
-    }
-    
-    init(renderer) {
-        this.renderer = renderer;
-        this.createControls();
-        this.loadData();
-    }
-    
-    createControls() {
-        // MENU BUTTON
-        const menuBtn = document.createElement('div');
-        menuBtn.id = 'menuBtn';
-        menuBtn.textContent = '☰';
-        this.container.appendChild(menuBtn);
-        
-        // CONTROLS PANEL
-        const controls = document.createElement('div');
-        controls.id = 'controls';
-        
-        controls.innerHTML = `
-            <div class="control-group">
-                <h3>$ZSD Tracker</h3>
-                <label>Date:</label>
-                <input type="date" id="dateInput">
-                <label>Value ($):</label>
-                <input type="number" id="valueInput" step="0.001" min="0" value="1.980">
-                <button id="addBtn">Add Point</button>
-                <button id="saveBtn">Save Data</button>
-                <button id="clearBtn">Clear All</button>
-            </div>
-            <div class="control-group">
-                <h3>Data Points</h3>
-                <div id="dataList"></div>
-            </div>
-        `;
-        
-        this.container.appendChild(controls);
-        
-        // DEBUG DISPLAY
-        const debug = document.createElement('div');
-        debug.id = 'debug';
-        debug.textContent = 'INITIALIZING...';
-        this.container.appendChild(debug);
-        
-        // EVENT LISTENERS
-        menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            controls.classList.toggle('show');
-        });
-        
-        this.container.addEventListener('click', () => {
-            controls.classList.remove('show');
-        });
-        
-        document.getElementById('addBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.addDataPoint();
-        });
-        
-        document.getElementById('saveBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.saveData();
-        });
-        
-        document.getElementById('clearBtn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (confirm('Clear all data?')) {
-                this.dataPoints = [];
-                localStorage.removeItem('zsdCurveData');
-                this.updateDataList();
-                this.updateGraph();
+        .status-time {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .status-items {
+            display: flex;
+            gap: 16px;
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        /* Start Menu - Apple Clean Style */
+        #startMenu {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-radius: 16px;
+            padding: 8px;
+            display: flex;
+            gap: 12px;
+            z-index: 1000;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 8px 32px rgba(0, 0, 0, 0.4),
+                0 1px 0 rgba(255, 255, 255, 0.1) inset;
+            min-width: 240px;
+            justify-content: center;
+        }
+
+        .app-icon {
+            width: 70px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .app-icon:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+        }
+
+        .app-icon.active {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .app-icon::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(255, 255, 255, 0.2) 50%, 
+                transparent 100%);
+        }
+
+        .app-label {
+            font-size: 9px;
+            font-weight: 500;
+            letter-spacing: 0.3px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 4px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .app-symbol {
+            font-size: 14px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.9);
+            margin-bottom: 2px;
+            text-align: center;
+            line-height: 1.2;
+        }
+
+        /* App Windows */
+        .app-window {
+            position: absolute;
+            width: 600px;
+            height: 500px;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(30px) saturate(180%);
+            -webkit-backdrop-filter: blur(30px) saturate(180%);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                0 1px 0 rgba(255, 255, 255, 0.1) inset;
+            z-index: 100;
+            display: none;
+            overflow: hidden;
+            cursor: move;
+        }
+
+        .app-window.active {
+            display: block;
+            animation: windowAppear 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .app-window.dragging {
+            cursor: grabbing;
+            z-index: 1000;
+        }
+
+        @keyframes windowAppear {
+            from {
+                opacity: 0;
+                transform: scale(0.95) translateY(10px);
             }
-        });
-        
-        // SET DEFAULT DATE
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        document.getElementById('dateInput').valueAsDate = tomorrow;
-    }
-    
-    loadData() {
-        const saved = localStorage.getItem('zsdCurveData');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                this.dataPoints = parsed.map(item => ({
-                    date: new Date(item.date).getTime(),
-                    value: parseFloat(item.value)
-                })).sort((a, b) => a.date - b.date);
-            } catch (e) {
-                this.dataPoints = this.getDefaultData();
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
             }
-        } else {
-            this.dataPoints = this.getDefaultData();
         }
-        this.updateDataList();
-        this.updateGraph();
-    }
-    
-    getDefaultData() {
-        const now = Date.now();
-        const day = 24 * 60 * 60 * 1000;
-        return [
-            {date: now - day * 3, value: 1.86},
-            {date: now - day * 2, value: 1.865},
-            {date: now - day * 1, value: 1.87},
-            {date: now, value: 1.975}
-        ];
-    }
-    
-    addDataPoint() {
-        const dateInput = document.getElementById('dateInput');
-        const valueInput = document.getElementById('valueInput');
-        
-        const date = new Date(dateInput.value).getTime();
-        const value = parseFloat(valueInput.value);
-        
-        if (isNaN(date) || isNaN(value)) return;
-        
-        const existingIndex = this.dataPoints.findIndex(d => d.date === date);
-        if (existingIndex >= 0) {
-            this.dataPoints[existingIndex].value = value;
-        } else {
-            this.dataPoints.push({date, value});
-            this.dataPoints.sort((a, b) => a.date - b.date);
-        }
-        
-        this.saveData();
-        this.updateGraph();
-    }
-    
-    saveData() {
-        const toSave = this.dataPoints.map(item => ({
-            date: new Date(item.date).toISOString(),
-            value: item.value
-        }));
-        localStorage.setItem('zsdCurveData', JSON.stringify(toSave));
-        this.updateDataList();
-    }
-    
-    updateDataList() {
-        const list = document.getElementById('dataList');
-        list.innerHTML = '';
-        
-        this.dataPoints.forEach(point => {
-            const div = document.createElement('div');
-            div.className = 'data-item';
-            div.innerHTML = `
-                <span class="data-date">${new Date(point.date).toLocaleDateString()}</span>
-                <span class="data-value">$${point.value.toFixed(3)}</span>
-            `;
-            list.appendChild(div);
-        });
-    }
-    
-    updateGraph() {
-        if (!this.renderer) return;
-        
-        // NORMALIZE VALUES FOR GPU
-        if (this.dataPoints.length === 0) {
-            this.renderer.setGraphData([]);
-            return;
-        }
-        
-        // FIND MIN AND MAX FOR NORMALIZATION
-        let minVal = this.dataPoints[0].value;
-        let maxVal = this.dataPoints[0].value;
-        
-        for (const point of this.dataPoints) {
-            if (point.value < minVal) minVal = point.value;
-            if (point.value > maxVal) maxVal = point.value;
-        }
-        
-        const range = maxVal - minVal || 1;
-        
-        // NORMALIZE VALUES TO 0-1 RANGE
-        const normalizedPoints = this.dataPoints.map(point => ({
-            date: point.date,
-            value: (point.value - minVal) / range
-        }));
-        
-        this.renderer.setGraphData(normalizedPoints);
-    }
-    
-    updateDebug(fps, triangles, points, quality, frameTime) {
-        const debug = document.getElementById('debug');
-        if (debug) {
-            debug.innerHTML = `
-                FPS: ${fps}<br>
-                Points: ${points}<br>
-                Triangles: ${triangles}<br>
-                Quality: ${Math.round(quality * 100)}%<br>
-                Frame: ${frameTime.toFixed(2)}ms<br>
-                Mem: ${Math.round(performance.memory?.usedJSHeapSize / 1048576) || '?'}MB
-            `;
-        }
-    }
-}
 
-// ============================================================================
-// MAIN QUANTUM ENGINE - ZERO OVERHEAD
-// ============================================================================
-class QuantumZSDTracker {
-    constructor() {
-        // QUANTUM RENDERER
-        this.renderer = new QuantumRenderer();
-        
-        // ULTRALIGHT UI
-        this.ui = new UIManager();
-        this.ui.init(this.renderer);
-        
-        // PERFORMANCE STATE
-        this.isRunning = true;
-        this.animationId = 0;
-        
-        this.start();
-    }
-    
-    start() {
-        const animate = (time) => {
-            if (!this.isRunning) return;
-            
-            // RENDER EVERYTHING IN ONE PASS
-            const fps = this.renderer.render(time);
-            
-            // UPDATE UI DEBUG INFO
-            this.ui.updateDebug(
-                fps,
-                this.renderer.triangleCount,
-                this.ui.dataPoints.length,
-                this.renderer.adaptive.quality,
-                this.renderer.performance.avgFrameTime
-            );
-            
-            // CONTINUE ANIMATION
-            this.animationId = requestAnimationFrame(animate);
-        };
-        
-        this.animationId = requestAnimationFrame(animate);
-        
-        // HANDLE RESIZE
-        window.addEventListener('resize', () => {
-            this.renderer.resize();
-        });
-    }
-    
-    stop() {
-        this.isRunning = false;
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
+        .window-header {
+            height: 50px;
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.03);
+            cursor: move;
         }
-    }
-}
 
-// ============================================================================
-// INITIALIZATION - SIMPLE AND CLEAN
-// ============================================================================
-let app;
+        .window-title {
+            font-size: 17px;
+            font-weight: 500;
+            color: rgba(255, 255, 255, 0.9);
+            letter-spacing: -0.2px;
+            user-select: none;
+        }
 
-window.addEventListener('load', () => {
-    try {
-        app = new QuantumZSDTracker();
-    } catch (e) {
-        console.error('Failed to initialize Quantum Engine:', e);
-        document.getElementById('debug').textContent = 'QUANTUM ENGINE INIT FAILED';
-    }
-});
+        .window-controls {
+            display: flex;
+            gap: 8px;
+        }
 
-window.addEventListener('beforeunload', () => {
-    if (app) app.stop();
-});
-</script>
+        .window-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(255, 255, 255, 0.05);
+            color: rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .window-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .window-btn.close:hover {
+            background: rgba(255, 59, 48, 0.2);
+            color: #ff3b30;
+            border-color: rgba(255, 59, 48, 0.3);
+        }
+
+        .window-content {
+            height: calc(100% - 50px);
+            padding: 20px;
+            cursor: default;
+        }
+
+        /* Graph Styles */
+        .graph-container {
+            width: 100%;
+            height: 100%;
+            position: relative;
+        }
+
+        canvas {
+            display: block;
+        }
+
+        .graph-info {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 2;
+        }
+
+        .graph-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 4px;
+            letter-spacing: -0.5px;
+        }
+
+        .graph-subtitle {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 400;
+        }
+
+        .graph-stats {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            text-align: right;
+            z-index: 2;
+        }
+
+        .graph-value {
+            font-size: 28px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.95);
+            margin-bottom: 2px;
+        }
+
+        .graph-change {
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .change-positive {
+            color: #30d158;
+        }
+
+        .change-negative {
+            color: #ff453a;
+        }
+
+        .axis-label {
+            position: absolute;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .y-axis-label {
+            left: 10px;
+            top: 50%;
+            transform: translateY(-50%) rotate(-90deg);
+            transform-origin: left center;
+        }
+
+        .x-axis-label {
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* Background Pattern */
+        .bg-pattern {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(255, 149, 0, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 40% 80%, rgba(52, 199, 89, 0.03) 0%, transparent 50%);
+            z-index: 0;
+        }
+    </style>
 </head>
-
 <body>
-<!-- NO CANVASES IN BODY - CREATED DYNAMICALLY -->
+    <div class="bg-pattern"></div>
+
+    <!-- Status Bar -->
+    <div id="statusBar">
+        <div class="status-time" id="currentTime">--:--</div>
+        <div class="status-items">
+            <span>RAZZER</span>
+            <span>OS 1.0</span>
+            <span id="networkStatus">● ONLINE</span>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div id="startMenu">
+        <div class="app-icon" data-app="maspot">
+            <div class="app-symbol">MA/SPOT</div>
+            <div class="app-label">Market Analysis</div>
+        </div>
+        <div class="app-icon" data-app="fund">
+            <div class="app-symbol">FUND</div>
+            <div class="app-label">Fund Dashboard</div>
+        </div>
+    </div>
+
+    <!-- MA/SPOT App Window -->
+    <div id="maspotWindow" class="app-window">
+        <div class="window-header">
+            <div class="window-title">MA/SPOT - Market Analysis</div>
+            <div class="window-controls">
+                <div class="window-btn minimize">–</div>
+                <div class="window-btn maximize">□</div>
+                <div class="window-btn close">×</div>
+            </div>
+        </div>
+        <div class="window-content">
+            <div class="graph-container">
+                <div class="graph-info">
+                    <div class="graph-title">MA/SPOT Analysis</div>
+                    <div class="graph-subtitle">Real-time price tracking</div>
+                </div>
+                <div class="graph-stats">
+                    <div class="graph-value" id="maspotValue">$24,850.34</div>
+                    <div class="graph-change change-positive" id="maspotChange">+2.34%</div>
+                </div>
+                <div class="axis-label y-axis-label">PRICE (USD)</div>
+                <div class="axis-label x-axis-label">BLOCK</div>
+                <canvas id="maspotCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- FUND App Window -->
+    <div id="fundWindow" class="app-window">
+        <div class="window-header">
+            <div class="window-title">FUND - ZSD Dashboard</div>
+            <div class="window-controls">
+                <div class="window-btn minimize">–</div>
+                <div class="window-btn maximize">□</div>
+                <div class="window-btn close">×</div>
+            </div>
+        </div>
+        <div class="window-content">
+            <div class="graph-container">
+                <div class="graph-info">
+                    <div class="graph-title">FUND Performance</div>
+                    <div class="graph-subtitle">ZSD token metrics</div>
+                </div>
+                <div class="graph-stats">
+                    <div class="graph-value" id="fundValue">$1,024.85</div>
+                    <div class="graph-change change-positive" id="fundChange">+0.85%</div>
+                </div>
+                <div class="axis-label y-axis-label">$ZSD</div>
+                <div class="axis-label x-axis-label">BLOCK</div>
+                <canvas id="fundCanvas"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================================
+        // RAZZER OS - APP MANAGER
+        // ============================================================================
+        class RAZZEROperatingSystem {
+            constructor() {
+                console.log("Initializing RAZZER OS...");
+                
+                // App state
+                this.activeApps = new Set();
+                this.apps = {
+                    maspot: new MASpotApp(),
+                    fund: new FundApp()
+                };
+                
+                this.zIndexCounter = 100;
+                this.windowPositions = {};
+                
+                // Initialize
+                this.init();
+            }
+            
+            init() {
+                // Setup event listeners
+                this.setupEventListeners();
+                
+                // Update time
+                this.updateTime();
+                setInterval(() => this.updateTime(), 1000);
+                
+                // Initialize apps
+                Object.values(this.apps).forEach(app => app.init());
+                
+                console.log("RAZZER OS initialized successfully");
+            }
+            
+            setupEventListeners() {
+                // App icon clicks
+                document.querySelectorAll('.app-icon').forEach(icon => {
+                    icon.addEventListener('click', (e) => {
+                        const appName = e.currentTarget.getAttribute('data-app');
+                        this.openApp(appName);
+                    });
+                });
+                
+                // Window controls
+                document.querySelectorAll('.window-btn.close').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const window = e.target.closest('.app-window');
+                        const appName = window.id.replace('Window', '');
+                        this.closeApp(appName);
+                    });
+                });
+                
+                // Minimize buttons
+                document.querySelectorAll('.window-btn.minimize').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const window = e.target.closest('.app-window');
+                        window.style.opacity = '0.5';
+                        window.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            window.style.opacity = '1';
+                            window.style.transform = 'scale(1)';
+                        }, 150);
+                    });
+                });
+                
+                // Maximize buttons
+                document.querySelectorAll('.window-btn.maximize').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const window = e.target.closest('.app-window');
+                        window.classList.toggle('maximized');
+                        if (window.classList.contains('maximized')) {
+                            window.style.top = '40px';
+                            window.style.left = '0';
+                            window.style.right = '0';
+                            window.style.bottom = '0';
+                            window.style.width = '100%';
+                            window.style.height = 'calc(100vh - 40px)';
+                        } else {
+                            window.style.top = window.dataset.originalTop || '100px';
+                            window.style.left = window.dataset.originalLeft || '100px';
+                            window.style.right = 'auto';
+                            window.style.bottom = 'auto';
+                            window.style.width = '600px';
+                            window.style.height = '500px';
+                        }
+                        // Resize canvas
+                        const appName = window.id.replace('Window', '');
+                        setTimeout(() => {
+                            this.apps[appName].resizeCanvas();
+                        }, 100);
+                    });
+                });
+                
+                // Setup window dragging
+                this.setupWindowDragging();
+                
+                // Close app with ESC key
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape') {
+                        // Close the topmost window
+                        const topWindow = this.getTopmostWindow();
+                        if (topWindow) {
+                            const appName = topWindow.id.replace('Window', '');
+                            this.closeApp(appName);
+                        }
+                    }
+                });
+            }
+            
+            setupWindowDragging() {
+                document.querySelectorAll('.app-window').forEach(window => {
+                    const header = window.querySelector('.window-header');
+                    let isDragging = false;
+                    let startX, startY, initialX, initialY;
+                    
+                    const startDrag = (e) => {
+                        if (e.target.classList.contains('window-btn')) return;
+                        
+                        isDragging = true;
+                        window.classList.add('dragging');
+                        
+                        startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                        startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+                        
+                        const rect = window.getBoundingClientRect();
+                        initialX = rect.left;
+                        initialY = rect.top;
+                        
+                        // Store original position if not maximized
+                        if (!window.classList.contains('maximized')) {
+                            window.dataset.originalTop = initialY + 'px';
+                            window.dataset.originalLeft = initialX + 'px';
+                        }
+                        
+                        // Bring to front
+                        this.bringToFront(window);
+                    };
+                    
+                    const drag = (e) => {
+                        if (!isDragging) return;
+                        
+                        e.preventDefault();
+                        
+                        const currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+                        const currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+                        
+                        const deltaX = currentX - startX;
+                        const deltaY = currentY - startY;
+                        
+                        window.style.left = (initialX + deltaX) + 'px';
+                        window.style.top = (initialY + deltaY) + 'px';
+                    };
+                    
+                    const endDrag = () => {
+                        isDragging = false;
+                        window.classList.remove('dragging');
+                    };
+                    
+                    // Mouse events
+                    header.addEventListener('mousedown', startDrag);
+                    document.addEventListener('mousemove', drag);
+                    document.addEventListener('mouseup', endDrag);
+                    
+                    // Touch events
+                    header.addEventListener('touchstart', startDrag);
+                    document.addEventListener('touchmove', drag);
+                    document.addEventListener('touchend', endDrag);
+                });
+            }
+            
+            bringToFront(window) {
+                this.zIndexCounter++;
+                window.style.zIndex = this.zIndexCounter;
+            }
+            
+            getTopmostWindow() {
+                const windows = document.querySelectorAll('.app-window.active');
+                let topWindow = null;
+                let highestZ = 0;
+                
+                windows.forEach(window => {
+                    const z = parseInt(window.style.zIndex) || 0;
+                    if (z > highestZ) {
+                        highestZ = z;
+                        topWindow = window;
+                    }
+                });
+                
+                return topWindow;
+            }
+            
+            openApp(appName) {
+                const window = document.getElementById(`${appName}Window`);
+                const icon = document.querySelector(`[data-app="${appName}"]`);
+                
+                if (!this.activeApps.has(appName)) {
+                    // Set initial position for new windows
+                    if (!this.windowPositions[appName]) {
+                        const openApps = Array.from(this.activeApps);
+                        const offset = openApps.length * 30;
+                        window.style.left = (100 + offset) + 'px';
+                        window.style.top = (100 + offset) + 'px';
+                        this.windowPositions[appName] = true;
+                    }
+                    
+                    window.classList.add('active');
+                    icon.classList.add('active');
+                    this.activeApps.add(appName);
+                    
+                    // Start app animation
+                    this.apps[appName].start();
+                    
+                    // Bring to front
+                    this.bringToFront(window);
+                    
+                    // Resize canvas after window is visible
+                    setTimeout(() => {
+                        this.apps[appName].resizeCanvas();
+                    }, 100);
+                    
+                    console.log(`Opened app: ${appName}`);
+                } else {
+                    // App already open, just bring to front
+                    this.bringToFront(window);
+                }
+            }
+            
+            closeApp(appName) {
+                const window = document.getElementById(`${appName}Window`);
+                const icon = document.querySelector(`[data-app="${appName}"]`);
+                
+                window.classList.remove('active');
+                icon.classList.remove('active');
+                this.activeApps.delete(appName);
+                
+                // Stop app animation
+                this.apps[appName].stop();
+                
+                console.log(`Closed app: ${appName}`);
+            }
+            
+            updateTime() {
+                const now = new Date();
+                const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('currentTime').textContent = timeStr;
+            }
+        }
+
+        // ============================================================================
+        // BASE GRAPH APP
+        // ============================================================================
+        class GraphApp {
+            constructor(canvasId, config) {
+                this.canvas = document.getElementById(canvasId);
+                this.ctx = this.canvas.getContext('2d');
+                this.config = config;
+                
+                // Data
+                this.data = [];
+                this.currentBlock = 1000000;
+                this.lastUpdate = 0;
+                this.animationId = null;
+                
+                // Initialize canvas
+                this.resizeCanvas();
+                window.addEventListener('resize', () => this.resizeCanvas());
+            }
+            
+            init() {
+                // Generate initial data
+                this.generateData(200);
+            }
+            
+            resizeCanvas() {
+                const container = this.canvas.parentElement;
+                this.canvas.width = container.clientWidth;
+                this.canvas.height = container.clientHeight;
+                this.render();
+            }
+            
+            generateData(count) {
+                this.data = [];
+                let price = this.config.initialPrice;
+                
+                for (let i = 0; i < count; i++) {
+                    const block = this.currentBlock - (count - i) + 1;
+                    
+                    // Simulate price movement
+                    const change = (Math.random() - 0.5) * this.config.volatility;
+                    price = price * (1 + change);
+                    price = Math.max(price, this.config.minPrice);
+                    price = Math.min(price, this.config.maxPrice);
+                    
+                    this.data.push({
+                        block: block,
+                        value: price,
+                        timestamp: Date.now() - (count - i) * 60000 // 1 min per block
+                    });
+                }
+                
+                this.currentBlock = this.data[this.data.length - 1].block;
+            }
+            
+            updateData() {
+                // Add new data point
+                const lastPrice = this.data[this.data.length - 1].value;
+                
+                // Simulate price movement with trend
+                const trend = Math.sin(Date.now() / 1000000) * 0.1; // Long term trend
+                const noise = (Math.random() - 0.5) * this.config.volatility * 2;
+                const news = Math.random() < 0.05 ? (Math.random() - 0.5) * this.config.volatility * 5 : 0;
+                
+                let newPrice = lastPrice * (1 + trend + noise + news);
+                newPrice = Math.max(newPrice, this.config.minPrice);
+                newPrice = Math.min(newPrice, this.config.maxPrice);
+                
+                this.currentBlock++;
+                this.data.push({
+                    block: this.currentBlock,
+                    value: newPrice,
+                    timestamp: Date.now()
+                });
+                
+                // Keep data length manageable
+                if (this.data.length > 300) {
+                    this.data.shift();
+                }
+                
+                // Update display values
+                this.updateDisplay();
+            }
+            
+            updateDisplay() {
+                const lastValue = this.data[this.data.length - 1].value;
+                const prevValue = this.data[Math.max(0, this.data.length - 2)].value;
+                const change = ((lastValue - prevValue) / prevValue) * 100;
+                
+                // Update DOM
+                const valueElement = document.getElementById(`${this.config.id}Value`);
+                const changeElement = document.getElementById(`${this.config.id}Change`);
+                
+                if (valueElement) {
+                    valueElement.textContent = this.config.formatValue(lastValue);
+                }
+                
+                if (changeElement) {
+                    changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
+                    changeElement.className = `graph-change ${change >= 0 ? 'change-positive' : 'change-negative'}`;
+                }
+            }
+            
+            render() {
+                const ctx = this.ctx;
+                const width = this.canvas.width;
+                const height = this.canvas.height;
+                
+                // Clear canvas
+                ctx.clearRect(0, 0, width, height);
+                
+                if (this.data.length < 2) return;
+                
+                // Calculate data bounds
+                const values = this.data.map(d => d.value);
+                const minValue = Math.min(...values);
+                const maxValue = Math.max(...values);
+                const valueRange = maxValue - minValue;
+                
+                const blocks = this.data.map(d => d.block);
+                const minBlock = Math.min(...blocks);
+                const maxBlock = Math.max(...blocks);
+                const blockRange = maxBlock - minBlock;
+                
+                // Set up margins
+                const margin = { top: 40, right: 40, bottom: 40, left: 40 };
+                const graphWidth = width - margin.left - margin.right;
+                const graphHeight = height - margin.top - margin.bottom;
+                
+                // Draw grid
+                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.lineWidth = 1;
+                
+                // Horizontal grid lines
+                for (let i = 0; i <= 5; i++) {
+                    const y = margin.top + (i * graphHeight / 5);
+                    ctx.beginPath();
+                    ctx.moveTo(margin.left, y);
+                    ctx.lineTo(width - margin.right, y);
+                    ctx.stroke();
+                    
+                    // Grid labels
+                    const value = minValue + (5 - i) * (valueRange / 5);
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.textAlign = 'right';
+                    ctx.fillText(this.config.formatGridValue(value), margin.left - 8, y + 3);
+                }
+                
+                // Vertical grid lines
+                const visiblePoints = Math.min(10, this.data.length);
+                for (let i = 0; i <= visiblePoints; i++) {
+                    const x = margin.left + (i * graphWidth / visiblePoints);
+                    ctx.beginPath();
+                    ctx.moveTo(x, margin.top);
+                    ctx.lineTo(x, height - margin.bottom);
+                    ctx.stroke();
+                }
+                
+                // Draw graph line
+                ctx.beginPath();
+                for (let i = 0; i < this.data.length; i++) {
+                    const point = this.data[i];
+                    const x = margin.left + ((point.block - minBlock) / blockRange) * graphWidth;
+                    const y = margin.top + ((maxValue - point.value) / valueRange) * graphHeight;
+                    
+                    if (i === 0) {
+                        ctx.moveTo(x, y);
+                    } else {
+                        ctx.lineTo(x, y);
+                    }
+                }
+                
+                // Line gradient
+                const gradient = ctx.createLinearGradient(0, margin.top, 0, height - margin.bottom);
+                gradient.addColorStop(0, this.config.gradientTop);
+                gradient.addColorStop(1, this.config.gradientBottom);
+                
+                ctx.strokeStyle = gradient;
+                ctx.lineWidth = 2;
+                ctx.lineJoin = 'round';
+                ctx.lineCap = 'round';
+                ctx.stroke();
+                
+                // Draw area under line
+                ctx.lineTo(width - margin.right, height - margin.bottom);
+                ctx.lineTo(margin.left, height - margin.bottom);
+                ctx.closePath();
+                
+                const areaGradient = ctx.createLinearGradient(0, margin.top, 0, height - margin.bottom);
+                areaGradient.addColorStop(0, this.config.areaTop);
+                areaGradient.addColorStop(1, this.config.areaBottom);
+                
+                ctx.fillStyle = areaGradient;
+                ctx.fill();
+                
+                // Draw current point
+                if (this.data.length > 0) {
+                    const lastPoint = this.data[this.data.length - 1];
+                    const lastX = margin.left + ((lastPoint.block - minBlock) / blockRange) * graphWidth;
+                    const lastY = margin.top + ((maxValue - lastPoint.value) / valueRange) * graphHeight;
+                    
+                    // Point glow
+                    ctx.beginPath();
+                    ctx.arc(lastX, lastY, 10, 0, Math.PI * 2);
+                    ctx.fillStyle = this.config.glowColor;
+                    ctx.globalAlpha = 0.3;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                    
+                    // Point
+                    ctx.beginPath();
+                    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fill();
+                    ctx.strokeStyle = this.config.glowColor;
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+                
+                // Draw block labels
+                if (blockRange > 0) {
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+                    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
+                    ctx.textAlign = 'center';
+                    
+                    const step = Math.max(1, Math.floor(this.data.length / 5));
+                    for (let i = 0; i < this.data.length; i += step) {
+                        if (i >= this.data.length) break;
+                        
+                        const point = this.data[i];
+                        const x = margin.left + ((point.block - minBlock) / blockRange) * graphWidth;
+                        const y = height - margin.bottom + 20;
+                        
+                        // Format block number with commas
+                        const blockStr = point.block.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                        ctx.fillText(blockStr, x, y);
+                    }
+                }
+            }
+            
+            start() {
+                // Clear any existing animation
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                }
+                
+                // Start animation loop
+                const animate = () => {
+                    const now = Date.now();
+                    if (now - this.lastUpdate > this.config.updateInterval) {
+                        this.updateData();
+                        this.lastUpdate = now;
+                    }
+                    
+                    this.render();
+                    this.animationId = requestAnimationFrame(animate);
+                };
+                
+                animate();
+            }
+            
+            stop() {
+                if (this.animationId) {
+                    cancelAnimationFrame(this.animationId);
+                    this.animationId = null;
+                }
+            }
+        }
+
+        // ============================================================================
+        // MA/SPOT APP
+        // ============================================================================
+        class MASpotApp extends GraphApp {
+            constructor() {
+                super('maspotCanvas', {
+                    id: 'maspot',
+                    initialPrice: 25000,
+                    minPrice: 15000,
+                    maxPrice: 35000,
+                    volatility: 0.02,
+                    updateInterval: 2000,
+                    formatValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
+                    formatGridValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
+                    gradientTop: 'rgba(10, 132, 255, 1)',
+                    gradientBottom: 'rgba(94, 92, 230, 1)',
+                    areaTop: 'rgba(10, 132, 255, 0.2)',
+                    areaBottom: 'rgba(94, 92, 230, 0.1)',
+                    glowColor: 'rgba(10, 132, 255, 1)'
+                });
+            }
+        }
+
+        // ============================================================================
+        // FUND APP
+        // ============================================================================
+        class FundApp extends GraphApp {
+            constructor() {
+                super('fundCanvas', {
+                    id: 'fund',
+                    initialPrice: 1000,
+                    minPrice: 800,
+                    maxPrice: 1200,
+                    volatility: 0.01,
+                    updateInterval: 2000,
+                    formatValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ZSD`,
+                    formatGridValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
+                    gradientTop: 'rgba(52, 199, 89, 1)',
+                    gradientBottom: 'rgba(48, 209, 88, 1)',
+                    areaTop: 'rgba(52, 199, 89, 0.2)',
+                    areaBottom: 'rgba(48, 209, 88, 0.1)',
+                    glowColor: 'rgba(52, 199, 89, 1)'
+                });
+            }
+        }
+
+        // ============================================================================
+        // INITIALIZE OS
+        // ============================================================================
+        window.addEventListener('load', () => {
+            console.log("Loading RAZZER OS...");
+            
+            try {
+                // Initialize the operating system
+                const razerOS = new RAZZEROperatingSystem();
+                window.razerOS = razerOS;
+                
+                // Update network status
+                setInterval(() => {
+                    const status = document.getElementById('networkStatus');
+                    const isOnline = navigator.onLine;
+                    status.textContent = isOnline ? '● ONLINE' : '● OFFLINE';
+                    status.style.color = isOnline ? 'rgba(52, 199, 89, 0.8)' : 'rgba(255, 69, 58, 0.8)';
+                }, 5000);
+                
+                console.log("RAZZER OS ready");
+                
+                // Auto-open MA/SPOT app after 1 second for demo
+                setTimeout(() => {
+                    razerOS.openApp('maspot');
+                }, 1000);
+                
+            } catch (error) {
+                console.error("Failed to initialize RAZZER OS:", error);
+                alert("Error initializing RAZZER OS: " + error.message);
+            }
+        });
+    </script>
 </body>
 </html>
