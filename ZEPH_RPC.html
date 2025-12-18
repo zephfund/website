@@ -1,49 +1,811 @@
 <!DOCTYPE html>
-<html lang="en">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zephyr RPC Call</title>
-</head>
-<body>
-    <h3>Zephyr Daemon RPC Response</h3>
-    <pre id="response">Waiting for response...</pre>
+<style>
+body{
+margin:0px;
+-webkit-user-drag: none;
+background-color:#343434;
+overflow: hidden;
+}
+#canvas3d{
+    height:100%;
+    width:100%;
+    position:absolute;
+}
+#canvasbg{
+    height:100%;
+    width:100%;
+    position:absolute;
+}
+#canvasarea{
+    height:100%;
+    width:100%;
+    position:absolute;
+}
+#canvasinfo{
+    height:100%;
+    width:100%;
+    position:absolute;
+    cursor: pointer;
+}
+#debug{
+    float:right;
+    position:relative;
+    color: #aaa;
+    font-size: 12px;
+    padding: 10px;
+}
+#menuBtn {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 1000;
+    width: 40px;
+    height: 40px;
+    background: rgba(60, 60, 60, 0.9);
+    border: 1px solid #555;
+    border-radius: 50%;
+    color: #e0e0e0;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(0,0,0,0.5);
+    transition: all 0.3s;
+}
+#menuBtn:hover {
+    background: rgba(80, 80, 80, 0.9);
+    transform: scale(1.1);
+}
+#controls {
+    position: absolute;
+    top: 70px;
+    left: 20px;
+    z-index: 100;
+    background: rgba(40, 40, 40, 0.95);
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    width: 280px;
+    transform: translateX(-320px);
+    transition: transform 0.3s ease;
+}
+#controls.show {
+    transform: translateX(0);
+}
+.control-group {
+    margin-bottom: 20px;
+}
+.control-group h3 {
+    margin: 0 0 15px 0;
+    color: #4a9cff;
+    font-size: 18px;
+}
+.control-group h4 {
+    margin: 0 0 10px 0;
+    color: #aaa;
+    font-size: 14px;
+}
+label {
+    display: block;
+    margin-bottom: 5px;
+    color: #aaa;
+    font-size: 14px;
+}
+input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    background: #222;
+    border: 1px solid #555;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 14px;
+}
+button {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 10px;
+    background: #4a6fa5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.3s;
+}
+button:hover {
+    background: #5a7fb5;
+}
+#dataList {
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 10px;
+    border-top: 1px solid #555;
+    padding-top: 10px;
+}
+.data-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #444;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+}
+.data-date {
+    color: #4a9cff;
+}
+.data-value {
+    color: #4aff9c;
+}
+</style>
 
-    <script>
-        async function callZephyrRPC() {
-            try {
-                // Use a CORS proxy service or your own proxy
-                const targetUrl = 'http://remote-node.zephyrprotocol.com:17767/json_rpc';
-                
-                const response = await fetch(targetUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Accept': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest' // Some proxies require this
-                    },
-                    body: JSON.stringify({
-                        jsonrpc: '2.0',
-                        id: '0',
-                        method: 'reserve_info',
-                        params: null
-                    })
-                });
-                const data = await response.json();
-                document.getElementById('response').innerText = JSON.stringify(data, null, 2);
-            } catch (error) {
-                document.getElementById('response').innerText = 'Error: ' + error.message;
+<script type="text/javascript">
+// Global variables
+var cW, cH;
+var lastFrameTime = 0;
+var frameCount = 0;
+var fps = 0;
+var fpsUpdateTime = 0;
+var animationId = null;
+
+// 3D background variables
+var triangles3D = [];
+var rotation3D = { x: 0, y: 0, z: 0 };
+
+// Graph configuration
+var graphConfig = {
+    margin: { top: 80, right: 80, bottom: 120, left: 120 },
+    graphWidth: 0,
+    graphHeight: 0,
+    minDate: null,
+    maxDate: null,
+    minValue: 0,
+    maxValue: 0,
+    needsRedraw: true,
+    bgNeedsRedraw: true
+};
+
+// Data management
+var dataPoints = [];
+
+// Initialize canvases
+var canvas3d, canvasbg, canvasarea, canvasinfo;
+var ctx3d, ctxbg, ctxarea, ctxinfo;
+var offscreenCanvas, offscreenCtx;
+
+function initCanvas() {
+    try {
+        // Get canvas elements
+        canvas3d = document.getElementById('canvas3d');
+        canvasbg = document.getElementById('canvasbg');
+        canvasarea = document.getElementById('canvasarea');
+        canvasinfo = document.getElementById('canvasinfo');
+        
+        if (!canvas3d || !canvasbg || !canvasarea || !canvasinfo) {
+            console.error('Canvas elements not found');
+            return;
+        }
+        
+        // Get contexts
+        ctx3d = canvas3d.getContext('2d');
+        ctxbg = canvasbg.getContext('2d');
+        ctxarea = canvasarea.getContext('2d');
+        ctxinfo = canvasinfo.getContext('2d');
+        
+        if (!ctx3d || !ctxbg || !ctxarea || !ctxinfo) {
+            console.error('Could not get canvas contexts');
+            return;
+        }
+        
+        // Create offscreen canvas for static elements
+        offscreenCanvas = document.createElement('canvas');
+        offscreenCtx = offscreenCanvas.getContext('2d');
+        
+        function setscale() {
+            var actualwx = window.innerWidth;
+            var actualhy = window.innerHeight;
+
+            canvas3d.width = canvasbg.width = canvasarea.width = canvasinfo.width = actualwx;
+            canvas3d.height = canvasbg.height = canvasarea.height = canvasinfo.height = actualhy;
+            
+            offscreenCanvas.width = actualwx;
+            offscreenCanvas.height = actualhy;
+            
+            cW = actualwx;
+            cH = actualhy;
+            
+            // Update graph dimensions
+            graphConfig.graphWidth = cW - graphConfig.margin.left - graphConfig.margin.right;
+            graphConfig.graphHeight = cH - graphConfig.margin.top - graphConfig.margin.bottom;
+            
+            // Mark for redraw
+            graphConfig.needsRedraw = true;
+            graphConfig.bgNeedsRedraw = true;
+            
+            // Initialize 3D triangles
+            init3DTriangles();
+        }
+        
+        setscale();
+        window.addEventListener('resize', setscale);
+        
+        // Initialize 3D background
+        init3DTriangles();
+        
+        // Load data
+        loadData();
+        
+        // Start animation loop
+        if (!animationId) {
+            animationId = requestAnimationFrame(animate);
+        }
+        
+        console.log('Canvas initialized successfully');
+    } catch (error) {
+        console.error('Error initializing canvas:', error);
+    }
+}
+
+function init3DTriangles() {
+    triangles3D = [];
+    var numTriangles = 15; // Reduced for better performance
+    
+    for (var i = 0; i < numTriangles; i++) {
+        triangles3D.push({
+            vertices: [
+                { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() * 2 - 1 },
+                { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() * 2 - 1 },
+                { x: Math.random() * 2 - 1, y: Math.random() * 2 - 1, z: Math.random() * 2 - 1 }
+            ],
+            color: { 
+                r: Math.random() * 0.3, 
+                g: Math.random() * 0.3 + 0.1, 
+                b: Math.random() * 0.3 + 0.2, 
+                a: 0.3 + Math.random() * 0.3 
+            },
+            rotationSpeed: { 
+                x: (Math.random() - 0.5) * 0.01, 
+                y: (Math.random() - 0.5) * 0.01, 
+                z: (Math.random() - 0.5) * 0.01 
+            }
+        });
+    }
+}
+
+function project3D(point3D) {
+    // Simple perspective projection
+    var distance = 5;
+    var factor = distance / (distance + point3D.z);
+    return {
+        x: point3D.x * factor * cW/2 + cW/2,
+        y: point3D.y * factor * cH/2 + cH/2
+    };
+}
+
+function rotatePoint3D(point, rotation) {
+    // Rotate around X axis
+    var y1 = point.y * Math.cos(rotation.x) - point.z * Math.sin(rotation.x);
+    var z1 = point.y * Math.sin(rotation.x) + point.z * Math.cos(rotation.x);
+    
+    // Rotate around Y axis
+    var x2 = point.x * Math.cos(rotation.y) + z1 * Math.sin(rotation.y);
+    var z2 = -point.x * Math.sin(rotation.y) + z1 * Math.cos(rotation.y);
+    
+    // Rotate around Z axis
+    var x3 = x2 * Math.cos(rotation.z) - y1 * Math.sin(rotation.z);
+    var y3 = x2 * Math.sin(rotation.z) + y1 * Math.cos(rotation.z);
+    
+    return { x: x3, y: y3, z: z2 };
+}
+
+function draw3D() {
+    if (!ctx3d) return;
+    
+    ctx3d.clearRect(0, 0, cW, cH);
+    
+    // Update rotation
+    rotation3D.x += 0.002;
+    rotation3D.y += 0.003;
+    rotation3D.z += 0.001;
+    
+    // Sort triangles by average Z for proper depth ordering
+    var sortedTriangles = triangles3D.slice().sort(function(a, b) {
+        var avgZA = (a.vertices[0].z + a.vertices[1].z + a.vertices[2].z) / 3;
+        var avgZB = (b.vertices[0].z + b.vertices[1].z + b.vertices[2].z) / 3;
+        return avgZA - avgZB;
+    });
+    
+    // Draw triangles
+    for (var i = 0; i < sortedTriangles.length; i++) {
+        var triangle = sortedTriangles[i];
+        
+        // Rotate vertices
+        var rotatedVertices = [];
+        for (var j = 0; j < 3; j++) {
+            rotatedVertices.push(rotatePoint3D(triangle.vertices[j], {
+                x: rotation3D.x + triangle.rotationSpeed.x * 100,
+                y: rotation3D.y + triangle.rotationSpeed.y * 100,
+                z: rotation3D.z + triangle.rotationSpeed.z * 100
+            }));
+        }
+        
+        // Project to 2D
+        var projectedVertices = [];
+        for (var j = 0; j < 3; j++) {
+            projectedVertices.push(project3D(rotatedVertices[j]));
+        }
+        
+        // Draw triangle
+        ctx3d.beginPath();
+        ctx3d.moveTo(projectedVertices[0].x, projectedVertices[0].y);
+        ctx3d.lineTo(projectedVertices[1].x, projectedVertices[1].y);
+        ctx3d.lineTo(projectedVertices[2].x, projectedVertices[2].y);
+        ctx3d.closePath();
+        
+        ctx3d.fillStyle = `rgba(${Math.floor(triangle.color.r * 255)}, ${Math.floor(triangle.color.g * 255)}, ${Math.floor(triangle.color.b * 255)}, ${triangle.color.a})`;
+        ctx3d.fill();
+        
+        ctx3d.strokeStyle = `rgba(${Math.floor(triangle.color.r * 255 * 1.5)}, ${Math.floor(triangle.color.g * 255 * 1.5)}, ${Math.floor(triangle.color.b * 255 * 1.5)}, ${triangle.color.a * 0.5})`;
+        ctx3d.lineWidth = 0.5;
+        ctx3d.stroke();
+    }
+}
+
+function drawBackground() {
+    if (!offscreenCtx || !graphConfig.bgNeedsRedraw) return;
+    
+    offscreenCtx.clearRect(0, 0, cW, cH);
+    
+    if (dataPoints.length === 0) {
+        graphConfig.bgNeedsRedraw = false;
+        return;
+    }
+    
+    // Draw grid lines and Y-axis labels
+    var numGridLines = 6;
+    for (var i = 0; i <= numGridLines; i++) {
+        var y = graphConfig.margin.top + (graphConfig.graphHeight * i / numGridLines);
+        var value = graphConfig.maxValue - ((graphConfig.maxValue - graphConfig.minValue) * i / numGridLines);
+        
+        // Draw grid line
+        offscreenCtx.beginPath();
+        offscreenCtx.moveTo(graphConfig.margin.left, y);
+        offscreenCtx.lineTo(graphConfig.margin.left + graphConfig.graphWidth, y);
+        offscreenCtx.strokeStyle = 'rgba(80, 80, 80, 0.3)';
+        offscreenCtx.lineWidth = 1;
+        offscreenCtx.stroke();
+        
+        // Draw value label
+        offscreenCtx.fillStyle = '#aaa';
+        offscreenCtx.font = '14px Arial';
+        offscreenCtx.textAlign = 'right';
+        offscreenCtx.fillText(value.toFixed(3), graphConfig.margin.left - 10, y + 4);
+        offscreenCtx.textAlign = 'left';
+    }
+    
+    // Draw dates on X-axis
+    var dateStep = Math.max(1, Math.floor(dataPoints.length / 6));
+    for (var i = 0; i < dataPoints.length; i += dateStep) {
+        var x = getGraphX(dataPoints[i].date);
+        offscreenCtx.fillStyle = '#aaa';
+        offscreenCtx.font = '12px Arial';
+        offscreenCtx.textAlign = 'center';
+        offscreenCtx.fillText(dataPoints[i].date.toLocaleDateString(), x, cH - graphConfig.margin.bottom + 20);
+    }
+    
+    // Draw axes
+    offscreenCtx.beginPath();
+    offscreenCtx.moveTo(graphConfig.margin.left, graphConfig.margin.top);
+    offscreenCtx.lineTo(graphConfig.margin.left, graphConfig.margin.top + graphConfig.graphHeight);
+    offscreenCtx.lineTo(graphConfig.margin.left + graphConfig.graphWidth, graphConfig.margin.top + graphConfig.graphHeight);
+    offscreenCtx.strokeStyle = 'rgba(120, 160, 220, 0.8)';
+    offscreenCtx.lineWidth = 2;
+    offscreenCtx.stroke();
+    
+    // Draw title and labels
+    offscreenCtx.fillStyle = '#e0e0e0';
+    offscreenCtx.font = 'bold 18px Arial';
+    offscreenCtx.textAlign = 'center';
+    offscreenCtx.fillText('$ZSD Value Curve Tracker', cW/2, graphConfig.margin.top/2);
+    
+    offscreenCtx.font = '14px Arial';
+    offscreenCtx.fillText('Date', cW/2, cH - graphConfig.margin.bottom/2 + 10);
+    
+    // Y-axis label
+    offscreenCtx.save();
+    offscreenCtx.translate(30, cH/2);
+    offscreenCtx.rotate(-Math.PI/2);
+    offscreenCtx.fillText('$ZSD Value', 0, 0);
+    offscreenCtx.restore();
+    
+    graphConfig.bgNeedsRedraw = false;
+}
+
+function drawGraph() {
+    if (!ctxarea || !graphConfig.needsRedraw) return;
+    
+    ctxarea.clearRect(0, 0, cW, cH);
+    
+    if (dataPoints.length === 0) {
+        graphConfig.needsRedraw = false;
+        return;
+    }
+    
+    // Draw background from offscreen canvas
+    if (offscreenCanvas) {
+        ctxarea.drawImage(offscreenCanvas, 0, 0);
+    }
+    
+    // Draw curve if we have enough points
+    if (dataPoints.length >= 2) {
+        ctxarea.beginPath();
+        
+        // Move to first point
+        var firstX = getGraphX(dataPoints[0].date);
+        var firstY = getGraphY(dataPoints[0].value);
+        ctxarea.moveTo(firstX, firstY);
+        
+        // Draw bezier curve between points
+        for (var i = 1; i < dataPoints.length; i++) {
+            var x1 = getGraphX(dataPoints[i-1].date);
+            var y1 = getGraphY(dataPoints[i-1].value);
+            var x2 = getGraphX(dataPoints[i].date);
+            var y2 = getGraphY(dataPoints[i].value);
+            
+            // Calculate control points for smooth curve
+            var dx = x2 - x1;
+            var dy = y2 - y1;
+            
+            var cp1x = x1 + dx * 0.3;
+            var cp1y = y1;
+            var cp2x = x2 - dx * 0.3;
+            var cp2y = y2;
+            
+            ctxarea.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, x2, y2);
+        }
+        
+        // Style the curve
+        ctxarea.strokeStyle = 'rgba(100, 200, 255, 0.9)';
+        ctxarea.lineWidth = 3;
+        ctxarea.stroke();
+    }
+    
+    // Draw data points
+    for (var i = 0; i < dataPoints.length; i++) {
+        var x = getGraphX(dataPoints[i].date);
+        var y = getGraphY(dataPoints[i].value);
+        
+        // Draw point
+        ctxarea.beginPath();
+        ctxarea.arc(x, y, 8, 0, Math.PI * 2);
+        ctxarea.fillStyle = 'rgba(255, 220, 100, 0.9)';
+        ctxarea.fill();
+        ctxarea.strokeStyle = 'rgba(255, 180, 50, 1)';
+        ctxarea.lineWidth = 2;
+        ctxarea.stroke();
+        
+        // Draw value label above point
+        ctxarea.fillStyle = '#4aff9c';
+        ctxarea.font = '12px Arial';
+        ctxarea.textAlign = 'center';
+        ctxarea.fillText('$' + dataPoints[i].value.toFixed(3), x, y - 15);
+    }
+    
+    graphConfig.needsRedraw = false;
+}
+
+function getGraphX(date) {
+    if (!graphConfig.minDate || !graphConfig.maxDate) return 0;
+    var dateRange = graphConfig.maxDate - graphConfig.minDate;
+    if (dateRange === 0) return graphConfig.margin.left + graphConfig.graphWidth/2;
+    
+    var normalized = (date - graphConfig.minDate) / dateRange;
+    return graphConfig.margin.left + (graphConfig.graphWidth * normalized);
+}
+
+function getGraphY(value) {
+    if (!graphConfig.minValue || !graphConfig.maxValue) return 0;
+    var valueRange = graphConfig.maxValue - graphConfig.minValue;
+    if (valueRange === 0) return graphConfig.margin.top + graphConfig.graphHeight/2;
+    
+    var normalized = (value - graphConfig.minValue) / valueRange;
+    return graphConfig.margin.top + graphConfig.graphHeight - (graphConfig.graphHeight * normalized);
+}
+
+function updateDebugInfo(timestamp) {
+    frameCount++;
+    
+    // Update FPS every second
+    if (timestamp - fpsUpdateTime >= 1000) {
+        fps = Math.round(frameCount * 1000 / (timestamp - fpsUpdateTime));
+        frameCount = 0;
+        fpsUpdateTime = timestamp;
+        
+        var debug = document.getElementById('debug');
+        if (debug) {
+            debug.innerHTML = "FPS: " + fps + "<br>Points: " + dataPoints.length;
+        }
+    }
+}
+
+function animate(timestamp) {
+    try {
+        // Update debug info
+        updateDebugInfo(timestamp);
+        
+        // Draw 3D background
+        draw3D();
+        
+        // Draw graph background if needed
+        drawBackground();
+        
+        // Draw graph if needed
+        drawGraph();
+        
+        // Continue animation loop
+        animationId = requestAnimationFrame(animate);
+    } catch (error) {
+        console.error('Animation error:', error);
+    }
+}
+
+// Data management functions
+function loadData() {
+    try {
+        var saved = localStorage.getItem('zsdCurveData');
+        if (saved) {
+            var parsed = JSON.parse(saved);
+            dataPoints = parsed.map(function(item) {
+                return { date: new Date(item.date), value: parseFloat(item.value) };
+            });
+            dataPoints.sort(function(a, b) { return a.date - b.date; });
+        } else {
+            // Default data
+            dataPoints = [
+                { date: new Date('2025-12-01'), value: 1.86 },
+                { date: new Date('2025-12-02'), value: 1.865 },
+                { date: new Date('2025-12-03'), value: 1.87 },
+                { date: new Date('2025-12-04'), value: 1.975 }
+            ];
+        }
+        updateDataList();
+        calculateGraphRanges();
+    } catch (error) {
+        console.error('Error loading data:', error);
+        // Use default data on error
+        dataPoints = [
+            { date: new Date('2025-12-01'), value: 1.86 },
+            { date: new Date('2025-12-02'), value: 1.865 },
+            { date: new Date('2025-12-03'), value: 1.87 },
+            { date: new Date('2025-12-04'), value: 1.975 }
+        ];
+        updateDataList();
+        calculateGraphRanges();
+    }
+}
+
+function saveData() {
+    try {
+        var toSave = dataPoints.map(function(item) {
+            return { date: item.date.toISOString(), value: item.value };
+        });
+        localStorage.setItem('zsdCurveData', JSON.stringify(toSave));
+        updateDataList();
+    } catch (error) {
+        console.error('Error saving data:', error);
+    }
+}
+
+function addDataPoint() {
+    try {
+        var dateInput = document.getElementById('dateInput');
+        var valueInput = document.getElementById('valueInput');
+        
+        if (!dateInput || !valueInput) return;
+        
+        var date = new Date(dateInput.value);
+        var value = parseFloat(valueInput.value);
+        
+        if (!date || isNaN(value)) return;
+        
+        // Update if date exists
+        for (var i = 0; i < dataPoints.length; i++) {
+            if (dataPoints[i].date.getTime() === date.getTime()) {
+                dataPoints[i].value = value;
+                saveData();
+                calculateGraphRanges();
+                return;
             }
         }
         
-        callZephyrRPC();
-    </script>
+        dataPoints.push({ date: date, value: value });
+        dataPoints.sort(function(a, b) { return a.date - b.date; });
+        saveData();
+        calculateGraphRanges();
+    } catch (error) {
+        console.error('Error adding data point:', error);
+    }
+}
+
+function updateDataList() {
+    try {
+        var list = document.getElementById('dataList');
+        if (!list) return;
+        
+        list.innerHTML = '';
+        
+        dataPoints.forEach(function(point) {
+            var div = document.createElement('div');
+            div.className = 'data-item';
+            div.innerHTML = '<span class="data-date">' + 
+                point.date.toLocaleDateString() + 
+                '</span><span class="data-value">$' + 
+                point.value.toFixed(3) + '</span>';
+            list.appendChild(div);
+        });
+    } catch (error) {
+        console.error('Error updating data list:', error);
+    }
+}
+
+function calculateGraphRanges() {
+    try {
+        if (dataPoints.length === 0) return;
+        
+        graphConfig.minDate = dataPoints[0].date;
+        graphConfig.maxDate = dataPoints[dataPoints.length - 1].date;
+        graphConfig.minValue = dataPoints[0].value;
+        graphConfig.maxValue = dataPoints[0].value;
+        
+        for (var i = 1; i < dataPoints.length; i++) {
+            if (dataPoints[i].value < graphConfig.minValue) graphConfig.minValue = dataPoints[i].value;
+            if (dataPoints[i].value > graphConfig.maxValue) graphConfig.maxValue = dataPoints[i].value;
+        }
+        
+        // Add padding to values for better visualization
+        var valueRange = graphConfig.maxValue - graphConfig.minValue;
+        graphConfig.minValue = Math.max(0, graphConfig.minValue - valueRange * 0.1);
+        graphConfig.maxValue = graphConfig.maxValue + valueRange * 0.1;
+        
+        // Ensure we have nice round numbers for Y-axis
+        var niceRange = findNiceRange(graphConfig.minValue, graphConfig.maxValue);
+        graphConfig.minValue = niceRange.min;
+        graphConfig.maxValue = niceRange.max;
+        
+        // Mark for redraw
+        graphConfig.needsRedraw = true;
+        graphConfig.bgNeedsRedraw = true;
+    } catch (error) {
+        console.error('Error calculating graph ranges:', error);
+    }
+}
+
+function findNiceRange(min, max) {
+    var range = max - min;
+    var step = Math.pow(10, Math.floor(Math.log10(range)));
+    
+    // Adjust step to nice values (1, 2, 5, 10, 20, 50...)
+    if (range/step < 2.5) step /= 2;
+    if (range/step > 5) step *= 2;
+    
+    var niceMin = Math.floor(min/step) * step;
+    var niceMax = Math.ceil(max/step) * step;
+    
+    return { min: niceMin, max: niceMax };
+}
+
+// Event handlers
+function setupEventHandlers() {
+    try {
+        var menuBtn = document.getElementById('menuBtn');
+        if (menuBtn) {
+            menuBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                var controls = document.getElementById('controls');
+                if (controls) {
+                    controls.classList.toggle('show');
+                }
+            });
+        }
+        
+        var canvasinfo = document.getElementById('canvasinfo');
+        if (canvasinfo) {
+            canvasinfo.addEventListener('click', function() {
+                var controls = document.getElementById('controls');
+                if (controls) {
+                    controls.classList.remove('show');
+                }
+            });
+        }
+        
+        var addBtn = document.getElementById('addBtn');
+        if (addBtn) {
+            addBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                addDataPoint();
+            });
+        }
+        
+        var saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) {
+            saveBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                saveData();
+            });
+        }
+        
+        var clearBtn = document.getElementById('clearBtn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                if (confirm('Clear all data points?')) {
+                    dataPoints = [];
+                    localStorage.removeItem('zsdCurveData');
+                    updateDataList();
+                    calculateGraphRanges();
+                }
+            });
+        }
+        
+        // Set default date
+        var dateInput = document.getElementById('dateInput');
+        if (dateInput) {
+            var tomorrow = new Date();
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            dateInput.valueAsDate = tomorrow;
+        }
+    } catch (error) {
+        console.error('Error setting up event handlers:', error);
+    }
+}
+
+// Initialize when page loads
+window.addEventListener('load', function() {
+    console.log('Page loaded, initializing...');
+    initCanvas();
+    setupEventHandlers();
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', function() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+    }
+});
+</script>
+</head>
+<body>
+
+<canvas id="canvas3d" draggable="false"></canvas>
+<canvas id="canvasbg" draggable="false"></canvas>
+<canvas id="canvasarea" draggable="false"></canvas>
+<canvas id="canvasinfo" draggable="false"></canvas>
+
+<div id="menuBtn" draggable="false">☰</div>
+
+<div id="controls" draggable="false">
+    <div class="control-group">
+        <h3>$ZSD Curve Tracker</h3>
+        <label for="dateInput">Date:</label>
+        <input type="date" id="dateInput">
+        
+        <label for="valueInput">$ZSD Value:</label>
+        <input type="number" id="valueInput" step="0.001" min="0" value="1.980">
+        
+        <button id="addBtn">Add Data Point</button>
+        <button id="saveBtn">Save to LocalStorage</button>
+        <button id="clearBtn">Clear All Data</button>
+    </div>
+    
+    <div class="control-group">
+        <h4>Stored Data Points:</h4>
+        <div id="dataList"></div>
+    </div>
+</div>
+
+<div id="debug" draggable="false">Loading...</div>
+
 </body>
-
 </html>
-
-
-
-
-
-
