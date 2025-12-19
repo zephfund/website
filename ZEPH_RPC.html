@@ -2,1009 +2,1409 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZEPHYR OS - Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ZAI OS - Professional Dashboard</title>
     <style>
         * {
-            box-sizing: border-box;
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body {
             overflow: hidden;
-            background: #000;
+            background: #000000;
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', Arial, sans-serif;
-            color: #fff;
+            color: #ffffff;
             width: 100vw;
             height: 100vh;
-            background: linear-gradient(135deg, #000000 0%, #0a0a0a 100%);
-        }
-
-        /* Status Bar */
-        #statusBar {
+            touch-action: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 40px;
-            background: rgba(255, 255, 255, 0.03);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 20px;
-            z-index: 1001;
-            font-size: 13px;
-            font-weight: 400;
-        }
-
-        .status-time {
-            color: rgba(255, 255, 255, 0.9);
-            font-weight: 500;
-        }
-
-        .status-items {
-            display: flex;
-            gap: 16px;
-            color: rgba(255, 255, 255, 0.7);
-        }
-
-        /* Start Menu - Apple Clean Style */
-        #startMenu {
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
-            border-radius: 16px;
-            padding: 8px;
-            display: flex;
-            gap: 12px;
-            z-index: 1000;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 
-                0 8px 32px rgba(0, 0, 0, 0.4),
-                0 1px 0 rgba(255, 255, 255, 0.1) inset;
-            min-width: 240px;
-            justify-content: center;
-        }
-
-        .app-icon {
-            width: 70px;
-            height: 60px;
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .app-icon:hover {
-            background: rgba(255, 255, 255, 0.12);
-            transform: translateY(-2px);
-            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .app-icon.active {
-            background: rgba(255, 255, 255, 0.15);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .app-icon::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 1px;
-            background: linear-gradient(90deg, 
-                transparent 0%, 
-                rgba(255, 255, 255, 0.2) 50%, 
-                transparent 100%);
-        }
-
-        .app-label {
-            font-size: 9px;
-            font-weight: 500;
-            letter-spacing: 0.3px;
-            color: rgba(255, 255, 255, 0.9);
-            margin-top: 4px;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-        }
-
-        .app-symbol {
-            font-size: 14px;
-            font-weight: 300;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 2px;
-            text-align: center;
-            line-height: 1.2;
-        }
-
-        /* App Windows */
-        .app-window {
-            position: absolute;
-            width: 600px;
-            height: 500px;
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(30px) saturate(180%);
-            -webkit-backdrop-filter: blur(30px) saturate(180%);
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 
-                0 20px 60px rgba(0, 0, 0, 0.5),
-                0 1px 0 rgba(255, 255, 255, 0.1) inset;
-            z-index: 100;
-            display: none;
-            overflow: hidden;
-            cursor: move;
-        }
-
-        .app-window.active {
-            display: block;
-            animation: windowAppear 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .app-window.dragging {
-            cursor: grabbing;
-            z-index: 1000;
-        }
-
-        @keyframes windowAppear {
-            from {
-                opacity: 0;
-                transform: scale(0.95) translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-            }
-        }
-
-        .window-header {
-            height: 50px;
-            padding: 0 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.03);
-            cursor: move;
-        }
-
-        .window-title {
-            font-size: 17px;
-            font-weight: 500;
-            color: rgba(255, 255, 255, 0.9);
-            letter-spacing: -0.2px;
-            user-select: none;
-        }
-
-        .window-controls {
-            display: flex;
-            gap: 8px;
-        }
-
-        .window-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 50%;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            background: rgba(255, 255, 255, 0.05);
-            color: rgba(255, 255, 255, 0.7);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 16px;
-            line-height: 1;
-        }
-
-        .window-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-
-        .window-btn.close:hover {
-            background: rgba(255, 59, 48, 0.2);
-            color: #ff3b30;
-            border-color: rgba(255, 59, 48, 0.3);
-        }
-
-        .window-content {
-            height: calc(100% - 50px);
-            padding: 20px;
-            cursor: default;
-        }
-
-        /* Graph Styles */
-        .graph-container {
-            width: 100%;
-            height: 100%;
-            position: relative;
         }
 
         canvas {
-            display: block;
-        }
-
-        .graph-info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            z-index: 2;
-        }
-
-        .graph-title {
-            font-size: 24px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
-            margin-bottom: 4px;
-            letter-spacing: -0.5px;
-        }
-
-        .graph-subtitle {
-            font-size: 13px;
-            color: rgba(255, 255, 255, 0.6);
-            font-weight: 400;
-        }
-
-        .graph-stats {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            text-align: right;
-            z-index: 2;
-        }
-
-        .graph-value {
-            font-size: 28px;
-            font-weight: 600;
-            color: rgba(255, 255, 255, 0.95);
-            margin-bottom: 2px;
-        }
-
-        .graph-change {
-            font-size: 13px;
-            font-weight: 500;
-        }
-
-        .change-positive {
-            color: #30d158;
-        }
-
-        .change-negative {
-            color: #ff453a;
-        }
-
-        .axis-label {
-            position: absolute;
-            font-size: 11px;
-            color: rgba(255, 255, 255, 0.5);
-            font-weight: 400;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .y-axis-label {
-            left: 10px;
-            top: 50%;
-            transform: translateY(-50%) rotate(-90deg);
-            transform-origin: left center;
-        }
-
-        .x-axis-label {
-            bottom: 10px;
-            left: 50%;
-            transform: translateX(-50%);
-        }
-
-        /* Background Pattern */
-        .bg-pattern {
             position: fixed;
             top: 0;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: 
-                radial-gradient(circle at 20% 50%, rgba(120, 119, 198, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 149, 0, 0.03) 0%, transparent 50%),
-                radial-gradient(circle at 40% 80%, rgba(52, 199, 89, 0.03) 0%, transparent 50%);
-            z-index: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 1;
+        }
+
+        #loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 16px;
+            font-weight: 300;
+            z-index: 1000;
+            text-align: center;
+            letter-spacing: 2px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px 30px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: opacity 0.5s;
+        }
+
+        .loading-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 50%;
+            margin: 0 4px;
+            animation: loading 1.4s infinite ease-in-out;
+        }
+
+        .loading-dot:nth-child(2) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(3) { animation-delay: -0.16s; }
+
+        @keyframes loading {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+            40% { transform: scale(1.0); opacity: 1; }
         }
     </style>
 </head>
 <body>
-    <div class="bg-pattern"></div>
-
-    <!-- Status Bar -->
-    <div id="statusBar">
-        <div class="status-time" id="currentTime">--:--</div>
-        <div class="status-items">
-            <span>RAZZER</span>
-            <span>OS 1.0</span>
-            <span id="networkStatus">● ONLINE</span>
-        </div>
-    </div>
-
-    <!-- Start Menu -->
-    <div id="startMenu">
-        <div class="app-icon" data-app="maspot">
-            <div class="app-symbol">MA/SPOT</div>
-            <div class="app-label">Market Analysis</div>
-        </div>
-        <div class="app-icon" data-app="fund">
-            <div class="app-symbol">FUND</div>
-            <div class="app-label">Fund Dashboard</div>
-        </div>
-    </div>
-
-    <!-- MA/SPOT App Window -->
-    <div id="maspotWindow" class="app-window">
-        <div class="window-header">
-            <div class="window-title">MA/SPOT - Market Analysis</div>
-            <div class="window-controls">
-                <div class="window-btn minimize">–</div>
-                <div class="window-btn maximize">□</div>
-                <div class="window-btn close">×</div>
-            </div>
-        </div>
-        <div class="window-content">
-            <div class="graph-container">
-                <div class="graph-info">
-                    <div class="graph-title">MA/SPOT Analysis</div>
-                    <div class="graph-subtitle">Real-time price tracking</div>
-                </div>
-                <div class="graph-stats">
-                    <div class="graph-value" id="maspotValue">$24,850.34</div>
-                    <div class="graph-change change-positive" id="maspotChange">+2.34%</div>
-                </div>
-                <div class="axis-label y-axis-label">PRICE (USD)</div>
-                <div class="axis-label x-axis-label">BLOCK</div>
-                <canvas id="maspotCanvas"></canvas>
-            </div>
-        </div>
-    </div>
-
-    <!-- FUND App Window -->
-    <div id="fundWindow" class="app-window">
-        <div class="window-header">
-            <div class="window-title">FUND - ZSD Dashboard</div>
-            <div class="window-controls">
-                <div class="window-btn minimize">–</div>
-                <div class="window-btn maximize">□</div>
-                <div class="window-btn close">×</div>
-            </div>
-        </div>
-        <div class="window-content">
-            <div class="graph-container">
-                <div class="graph-info">
-                    <div class="graph-title">FUND Performance</div>
-                    <div class="graph-subtitle">ZSD token metrics</div>
-                </div>
-                <div class="graph-stats">
-                    <div class="graph-value" id="fundValue">$1,024.85</div>
-                    <div class="graph-change change-positive" id="fundChange">+0.85%</div>
-                </div>
-                <div class="axis-label y-axis-label">$ZSD</div>
-                <div class="axis-label x-axis-label">BLOCK</div>
-                <canvas id="fundCanvas"></canvas>
-            </div>
-        </div>
+    <canvas id="mainCanvas"></canvas>
+    <div id="loading">
+        ZAI OS<span class="loading-dot"></span><span class="loading-dot"></span><span class="loading-dot"></span>
     </div>
 
     <script>
-        // ============================================================================
-        // RAZZER OS - APP MANAGER
-        // ============================================================================
-        class RAZZEROperatingSystem {
-            constructor() {
-                console.log("Initializing RAZZER OS...");
-                
-                // App state
-                this.activeApps = new Set();
-                this.apps = {
-                    maspot: new MASpotApp(),
-                    fund: new FundApp()
-                };
-                
-                this.zIndexCounter = 100;
-                this.windowPositions = {};
-                
-                // Initialize
-                this.init();
-            }
-            
-            init() {
-                // Setup event listeners
-                this.setupEventListeners();
-                
-                // Update time
-                this.updateTime();
-                setInterval(() => this.updateTime(), 1000);
-                
-                // Initialize apps
-                Object.values(this.apps).forEach(app => app.init());
-                
-                console.log("RAZZER OS initialized successfully");
-            }
-            
-            setupEventListeners() {
-                // App icon clicks
-                document.querySelectorAll('.app-icon').forEach(icon => {
-                    icon.addEventListener('click', (e) => {
-                        const appName = e.currentTarget.getAttribute('data-app');
-                        this.openApp(appName);
-                    });
-                });
-                
-                // Window controls
-                document.querySelectorAll('.window-btn.close').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const window = e.target.closest('.app-window');
-                        const appName = window.id.replace('Window', '');
-                        this.closeApp(appName);
-                    });
-                });
-                
-                // Minimize buttons
-                document.querySelectorAll('.window-btn.minimize').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const window = e.target.closest('.app-window');
-                        window.style.opacity = '0.5';
-                        window.style.transform = 'scale(0.95)';
-                        setTimeout(() => {
-                            window.style.opacity = '1';
-                            window.style.transform = 'scale(1)';
-                        }, 150);
-                    });
-                });
-                
-                // Maximize buttons
-                document.querySelectorAll('.window-btn.maximize').forEach(btn => {
-                    btn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        const window = e.target.closest('.app-window');
-                        window.classList.toggle('maximized');
-                        if (window.classList.contains('maximized')) {
-                            window.style.top = '40px';
-                            window.style.left = '0';
-                            window.style.right = '0';
-                            window.style.bottom = '0';
-                            window.style.width = '100%';
-                            window.style.height = 'calc(100vh - 40px)';
-                        } else {
-                            window.style.top = window.dataset.originalTop || '100px';
-                            window.style.left = window.dataset.originalLeft || '100px';
-                            window.style.right = 'auto';
-                            window.style.bottom = 'auto';
-                            window.style.width = '600px';
-                            window.style.height = '500px';
-                        }
-                        // Resize canvas
-                        const appName = window.id.replace('Window', '');
-                        setTimeout(() => {
-                            this.apps[appName].resizeCanvas();
-                        }, 100);
-                    });
-                });
-                
-                // Setup window dragging
-                this.setupWindowDragging();
-                
-                // Close app with ESC key
-                document.addEventListener('keydown', (e) => {
-                    if (e.key === 'Escape') {
-                        // Close the topmost window
-                        const topWindow = this.getTopmostWindow();
-                        if (topWindow) {
-                            const appName = topWindow.id.replace('Window', '');
-                            this.closeApp(appName);
-                        }
-                    }
-                });
-            }
-            
-            setupWindowDragging() {
-                document.querySelectorAll('.app-window').forEach(window => {
-                    const header = window.querySelector('.window-header');
-                    let isDragging = false;
-                    let startX, startY, initialX, initialY;
-                    
-                    const startDrag = (e) => {
-                        if (e.target.classList.contains('window-btn')) return;
-                        
-                        isDragging = true;
-                        window.classList.add('dragging');
-                        
-                        startX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                        startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                        
-                        const rect = window.getBoundingClientRect();
-                        initialX = rect.left;
-                        initialY = rect.top;
-                        
-                        // Store original position if not maximized
-                        if (!window.classList.contains('maximized')) {
-                            window.dataset.originalTop = initialY + 'px';
-                            window.dataset.originalLeft = initialX + 'px';
-                        }
-                        
-                        // Bring to front
-                        this.bringToFront(window);
-                    };
-                    
-                    const drag = (e) => {
-                        if (!isDragging) return;
-                        
-                        e.preventDefault();
-                        
-                        const currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
-                        const currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
-                        
-                        const deltaX = currentX - startX;
-                        const deltaY = currentY - startY;
-                        
-                        window.style.left = (initialX + deltaX) + 'px';
-                        window.style.top = (initialY + deltaY) + 'px';
-                    };
-                    
-                    const endDrag = () => {
-                        isDragging = false;
-                        window.classList.remove('dragging');
-                    };
-                    
-                    // Mouse events
-                    header.addEventListener('mousedown', startDrag);
-                    document.addEventListener('mousemove', drag);
-                    document.addEventListener('mouseup', endDrag);
-                    
-                    // Touch events
-                    header.addEventListener('touchstart', startDrag);
-                    document.addEventListener('touchmove', drag);
-                    document.addEventListener('touchend', endDrag);
-                });
-            }
-            
-            bringToFront(window) {
-                this.zIndexCounter++;
-                window.style.zIndex = this.zIndexCounter;
-            }
-            
-            getTopmostWindow() {
-                const windows = document.querySelectorAll('.app-window.active');
-                let topWindow = null;
-                let highestZ = 0;
-                
-                windows.forEach(window => {
-                    const z = parseInt(window.style.zIndex) || 0;
-                    if (z > highestZ) {
-                        highestZ = z;
-                        topWindow = window;
-                    }
-                });
-                
-                return topWindow;
-            }
-            
-            openApp(appName) {
-                const window = document.getElementById(`${appName}Window`);
-                const icon = document.querySelector(`[data-app="${appName}"]`);
-                
-                if (!this.activeApps.has(appName)) {
-                    // Set initial position for new windows
-                    if (!this.windowPositions[appName]) {
-                        const openApps = Array.from(this.activeApps);
-                        const offset = openApps.length * 30;
-                        window.style.left = (100 + offset) + 'px';
-                        window.style.top = (100 + offset) + 'px';
-                        this.windowPositions[appName] = true;
-                    }
-                    
-                    window.classList.add('active');
-                    icon.classList.add('active');
-                    this.activeApps.add(appName);
-                    
-                    // Start app animation
-                    this.apps[appName].start();
-                    
-                    // Bring to front
-                    this.bringToFront(window);
-                    
-                    // Resize canvas after window is visible
-                    setTimeout(() => {
-                        this.apps[appName].resizeCanvas();
-                    }, 100);
-                    
-                    console.log(`Opened app: ${appName}`);
-                } else {
-                    // App already open, just bring to front
-                    this.bringToFront(window);
-                }
-            }
-            
-            closeApp(appName) {
-                const window = document.getElementById(`${appName}Window`);
-                const icon = document.querySelector(`[data-app="${appName}"]`);
-                
-                window.classList.remove('active');
-                icon.classList.remove('active');
-                this.activeApps.delete(appName);
-                
-                // Stop app animation
-                this.apps[appName].stop();
-                
-                console.log(`Closed app: ${appName}`);
-            }
-            
-            updateTime() {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-                document.getElementById('currentTime').textContent = timeStr;
-            }
+// ============================================================================
+// ZAI OS - FIXED WINDOW MANAGEMENT ENGINE WITH IMPROVED FOCUS MANAGEMENT
+// ============================================================================
+class ZAIFixedEngine {
+    constructor() {
+        console.log("🚀 Initializing ZAI Fixed Engine with Improved Focus Management...");
+        
+        // Core canvas setup
+        this.canvas = document.getElementById('mainCanvas');
+        this.ctx = this.canvas.getContext('2d', {
+            alpha: false,
+            desynchronized: true,
+            powerPreference: 'high-performance'
+        });
+        
+        if (!this.ctx) {
+            alert("❌ Canvas 2D not supported. Please use a modern browser.");
+            return;
         }
-
-        // ============================================================================
-        // BASE GRAPH APP
-        // ============================================================================
-        class GraphApp {
-            constructor(canvasId, config) {
-                this.canvas = document.getElementById(canvasId);
-                this.ctx = this.canvas.getContext('2d');
-                this.config = config;
-                
-                // Data
-                this.data = [];
-                this.currentBlock = 1000000;
-                this.lastUpdate = 0;
-                this.animationId = null;
-                
-                // Initialize canvas
-                this.resizeCanvas();
-                window.addEventListener('resize', () => this.resizeCanvas());
-            }
-            
-            init() {
-                // Generate initial data
-                this.generateData(200);
-            }
-            
-            resizeCanvas() {
-                const container = this.canvas.parentElement;
-                this.canvas.width = container.clientWidth;
-                this.canvas.height = container.clientHeight;
-                this.render();
-            }
-            
-            generateData(count) {
-                this.data = [];
-                let price = this.config.initialPrice;
-                
-                for (let i = 0; i < count; i++) {
-                    const block = this.currentBlock - (count - i) + 1;
-                    
-                    // Simulate price movement
-                    const change = (Math.random() - 0.5) * this.config.volatility;
-                    price = price * (1 + change);
-                    price = Math.max(price, this.config.minPrice);
-                    price = Math.min(price, this.config.maxPrice);
-                    
-                    this.data.push({
-                        block: block,
-                        value: price,
-                        timestamp: Date.now() - (count - i) * 60000 // 1 min per block
-                    });
-                }
-                
-                this.currentBlock = this.data[this.data.length - 1].block;
-            }
-            
-            updateData() {
-                // Add new data point
-                const lastPrice = this.data[this.data.length - 1].value;
-                
-                // Simulate price movement with trend
-                const trend = Math.sin(Date.now() / 1000000) * 0.1; // Long term trend
-                const noise = (Math.random() - 0.5) * this.config.volatility * 2;
-                const news = Math.random() < 0.05 ? (Math.random() - 0.5) * this.config.volatility * 5 : 0;
-                
-                let newPrice = lastPrice * (1 + trend + noise + news);
-                newPrice = Math.max(newPrice, this.config.minPrice);
-                newPrice = Math.min(newPrice, this.config.maxPrice);
-                
-                this.currentBlock++;
-                this.data.push({
-                    block: this.currentBlock,
-                    value: newPrice,
-                    timestamp: Date.now()
-                });
-                
-                // Keep data length manageable
-                if (this.data.length > 300) {
-                    this.data.shift();
-                }
-                
-                // Update display values
-                this.updateDisplay();
-            }
-            
-            updateDisplay() {
-                const lastValue = this.data[this.data.length - 1].value;
-                const prevValue = this.data[Math.max(0, this.data.length - 2)].value;
-                const change = ((lastValue - prevValue) / prevValue) * 100;
-                
-                // Update DOM
-                const valueElement = document.getElementById(`${this.config.id}Value`);
-                const changeElement = document.getElementById(`${this.config.id}Change`);
-                
-                if (valueElement) {
-                    valueElement.textContent = this.config.formatValue(lastValue);
-                }
-                
-                if (changeElement) {
-                    changeElement.textContent = `${change >= 0 ? '+' : ''}${change.toFixed(2)}%`;
-                    changeElement.className = `graph-change ${change >= 0 ? 'change-positive' : 'change-negative'}`;
-                }
-            }
-            
-            render() {
-                const ctx = this.ctx;
-                const width = this.canvas.width;
-                const height = this.canvas.height;
-                
-                // Clear canvas
-                ctx.clearRect(0, 0, width, height);
-                
-                if (this.data.length < 2) return;
-                
-                // Calculate data bounds
-                const values = this.data.map(d => d.value);
-                const minValue = Math.min(...values);
-                const maxValue = Math.max(...values);
-                const valueRange = maxValue - minValue;
-                
-                const blocks = this.data.map(d => d.block);
-                const minBlock = Math.min(...blocks);
-                const maxBlock = Math.max(...blocks);
-                const blockRange = maxBlock - minBlock;
-                
-                // Set up margins
-                const margin = { top: 40, right: 40, bottom: 40, left: 40 };
-                const graphWidth = width - margin.left - margin.right;
-                const graphHeight = height - margin.top - margin.bottom;
-                
-                // Draw grid
-                ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-                ctx.lineWidth = 1;
-                
-                // Horizontal grid lines
-                for (let i = 0; i <= 5; i++) {
-                    const y = margin.top + (i * graphHeight / 5);
-                    ctx.beginPath();
-                    ctx.moveTo(margin.left, y);
-                    ctx.lineTo(width - margin.right, y);
-                    ctx.stroke();
-                    
-                    // Grid labels
-                    const value = minValue + (5 - i) * (valueRange / 5);
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
-                    ctx.textAlign = 'right';
-                    ctx.fillText(this.config.formatGridValue(value), margin.left - 8, y + 3);
-                }
-                
-                // Vertical grid lines
-                const visiblePoints = Math.min(10, this.data.length);
-                for (let i = 0; i <= visiblePoints; i++) {
-                    const x = margin.left + (i * graphWidth / visiblePoints);
-                    ctx.beginPath();
-                    ctx.moveTo(x, margin.top);
-                    ctx.lineTo(x, height - margin.bottom);
-                    ctx.stroke();
-                }
-                
-                // Draw graph line
-                ctx.beginPath();
-                for (let i = 0; i < this.data.length; i++) {
-                    const point = this.data[i];
-                    const x = margin.left + ((point.block - minBlock) / blockRange) * graphWidth;
-                    const y = margin.top + ((maxValue - point.value) / valueRange) * graphHeight;
-                    
-                    if (i === 0) {
-                        ctx.moveTo(x, y);
-                    } else {
-                        ctx.lineTo(x, y);
-                    }
-                }
-                
-                // Line gradient
-                const gradient = ctx.createLinearGradient(0, margin.top, 0, height - margin.bottom);
-                gradient.addColorStop(0, this.config.gradientTop);
-                gradient.addColorStop(1, this.config.gradientBottom);
-                
-                ctx.strokeStyle = gradient;
-                ctx.lineWidth = 2;
-                ctx.lineJoin = 'round';
-                ctx.lineCap = 'round';
-                ctx.stroke();
-                
-                // Draw area under line
-                ctx.lineTo(width - margin.right, height - margin.bottom);
-                ctx.lineTo(margin.left, height - margin.bottom);
-                ctx.closePath();
-                
-                const areaGradient = ctx.createLinearGradient(0, margin.top, 0, height - margin.bottom);
-                areaGradient.addColorStop(0, this.config.areaTop);
-                areaGradient.addColorStop(1, this.config.areaBottom);
-                
-                ctx.fillStyle = areaGradient;
-                ctx.fill();
-                
-                // Draw current point
-                if (this.data.length > 0) {
-                    const lastPoint = this.data[this.data.length - 1];
-                    const lastX = margin.left + ((lastPoint.block - minBlock) / blockRange) * graphWidth;
-                    const lastY = margin.top + ((maxValue - lastPoint.value) / valueRange) * graphHeight;
-                    
-                    // Point glow
-                    ctx.beginPath();
-                    ctx.arc(lastX, lastY, 10, 0, Math.PI * 2);
-                    ctx.fillStyle = this.config.glowColor;
-                    ctx.globalAlpha = 0.3;
-                    ctx.fill();
-                    ctx.globalAlpha = 1;
-                    
-                    // Point
-                    ctx.beginPath();
-                    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
-                    ctx.fillStyle = '#ffffff';
-                    ctx.fill();
-                    ctx.strokeStyle = this.config.glowColor;
-                    ctx.lineWidth = 2;
-                    ctx.stroke();
-                }
-                
-                // Draw block labels
-                if (blockRange > 0) {
-                    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-                    ctx.font = '10px -apple-system, BlinkMacSystemFont, sans-serif';
-                    ctx.textAlign = 'center';
-                    
-                    const step = Math.max(1, Math.floor(this.data.length / 5));
-                    for (let i = 0; i < this.data.length; i += step) {
-                        if (i >= this.data.length) break;
-                        
-                        const point = this.data[i];
-                        const x = margin.left + ((point.block - minBlock) / blockRange) * graphWidth;
-                        const y = height - margin.bottom + 20;
-                        
-                        // Format block number with commas
-                        const blockStr = point.block.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-                        ctx.fillText(blockStr, x, y);
-                    }
-                }
-            }
-            
-            start() {
-                // Clear any existing animation
-                if (this.animationId) {
-                    cancelAnimationFrame(this.animationId);
-                }
-                
-                // Start animation loop
-                const animate = () => {
-                    const now = Date.now();
-                    if (now - this.lastUpdate > this.config.updateInterval) {
-                        this.updateData();
-                        this.lastUpdate = now;
-                    }
-                    
-                    this.render();
-                    this.animationId = requestAnimationFrame(animate);
-                };
-                
-                animate();
-            }
-            
-            stop() {
-                if (this.animationId) {
-                    cancelAnimationFrame(this.animationId);
-                    this.animationId = null;
-                }
-            }
-        }
-
-        // ============================================================================
-        // MA/SPOT APP
-        // ============================================================================
-        class MASpotApp extends GraphApp {
-            constructor() {
-                super('maspotCanvas', {
-                    id: 'maspot',
-                    initialPrice: 25000,
-                    minPrice: 15000,
-                    maxPrice: 35000,
-                    volatility: 0.02,
-                    updateInterval: 2000,
-                    formatValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})}`,
-                    formatGridValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
-                    gradientTop: 'rgba(10, 132, 255, 1)',
-                    gradientBottom: 'rgba(94, 92, 230, 1)',
-                    areaTop: 'rgba(10, 132, 255, 0.2)',
-                    areaBottom: 'rgba(94, 92, 230, 0.1)',
-                    glowColor: 'rgba(10, 132, 255, 1)'
-                });
-            }
-        }
-
-        // ============================================================================
-        // FUND APP
-        // ============================================================================
-        class FundApp extends GraphApp {
-            constructor() {
-                super('fundCanvas', {
-                    id: 'fund',
-                    initialPrice: 1000,
-                    minPrice: 800,
-                    maxPrice: 1200,
-                    volatility: 0.01,
-                    updateInterval: 2000,
-                    formatValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2})} ZSD`,
-                    formatGridValue: (value) => `$${value.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0})}`,
-                    gradientTop: 'rgba(52, 199, 89, 1)',
-                    gradientBottom: 'rgba(48, 209, 88, 1)',
-                    areaTop: 'rgba(52, 199, 89, 0.2)',
-                    areaBottom: 'rgba(48, 209, 88, 0.1)',
-                    glowColor: 'rgba(52, 199, 89, 1)'
-                });
-            }
-        }
-
-        // ============================================================================
-        // INITIALIZE OS
-        // ============================================================================
-        window.addEventListener('load', () => {
-            console.log("Loading RAZZER OS...");
-            
-            try {
-                // Initialize the operating system
-                const razerOS = new RAZZEROperatingSystem();
-                window.razerOS = razerOS;
-                
-                // Update network status
-                setInterval(() => {
-                    const status = document.getElementById('networkStatus');
-                    const isOnline = navigator.onLine;
-                    status.textContent = isOnline ? '● ONLINE' : '● OFFLINE';
-                    status.style.color = isOnline ? 'rgba(52, 199, 89, 0.8)' : 'rgba(255, 69, 58, 0.8)';
-                }, 5000);
-                
-                console.log("RAZZER OS ready");
-                
-                // Auto-open MA/SPOT app after 1 second for demo
-                setTimeout(() => {
-                    razerOS.openApp('maspot');
-                }, 1000);
-                
-            } catch (error) {
-                console.error("Failed to initialize RAZZER OS:", error);
-                alert("Error initializing RAZZER OS: " + error.message);
+        
+        // Reference dimensions (16:9 ratio)
+        this.refWidth = 1920;
+        this.refHeight = 1080;
+        
+        // Current scaling factors
+        this.scaleX = 1;
+        this.scaleY = 1;
+        this.scaleMin = 1;
+        this.pixelRatio = Math.min(2, window.devicePixelRatio || 1);
+        
+        // Engine state
+        this.running = true;
+        this.lastFrameTime = 0;
+        this.frameCount = 0;
+        this.fps = 60;
+        
+        // UI Components
+        this.dock = new FixedDock(this);
+        this.windows = [];
+        this.activeWindow = null;
+        this.windowCounter = { maspot: 0, fund: 0, settings: 0 };
+        
+        // Input state
+        this.mouse = {
+            x: 0, y: 0,
+            down: false,
+            drag: null
+        };
+        
+        // Snap zones
+        this.snapThreshold = 0.02;
+        
+        // Performance tracking
+        this.perfStats = {
+            fps: 0,
+            frameTime: 0,
+            windows: 0,
+            lastUpdate: 0
+        };
+        
+        // Initialize
+        this.initialize();
+    }
+    
+    initialize() {
+        // Set initial canvas size
+        this.resize();
+        
+        // Setup event listeners
+        this.setupEventListeners();
+        
+        // Hide loading screen
+        setTimeout(() => {
+            document.getElementById('loading').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 500);
+        }, 1000);
+        
+        // Start animation loop
+        this.animate();
+        
+        console.log("✅ ZAI Fixed Engine ready");
+    }
+    
+    setupEventListeners() {
+        // Window resize
+        window.addEventListener('resize', () => this.resize());
+        
+        // Mouse events
+        this.canvas.addEventListener('mousedown', (e) => this.onMouseDown(e));
+        this.canvas.addEventListener('mousemove', (e) => this.onMouseMove(e));
+        document.addEventListener('mouseup', () => this.onMouseUp());
+        document.addEventListener('mouseleave', () => this.onMouseUp());
+        
+        // Touch events
+        this.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (e.touches[0]) {
+                const touch = e.touches[0];
+                this.onMouseDown({ clientX: touch.clientX, clientY: touch.clientY });
             }
         });
+        
+        this.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            if (e.touches[0]) {
+                const touch = e.touches[0];
+                this.onMouseMove({ clientX: touch.clientX, clientY: touch.clientY });
+            }
+        });
+        
+        this.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            this.onMouseUp();
+        });
+    }
+    
+    resize() {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        
+        // Set canvas size
+        this.canvas.width = width * this.pixelRatio;
+        this.canvas.height = height * this.pixelRatio;
+        this.canvas.style.width = width + 'px';
+        this.canvas.style.height = height + 'px';
+        
+        // Update scaling factors
+        this.scaleX = width / this.refWidth;
+        this.scaleY = height / this.refHeight;
+        this.scaleMin = Math.min(this.scaleX, this.scaleY);
+        
+        // Scale context
+        if (this.pixelRatio !== 1) {
+            this.ctx.scale(this.pixelRatio, this.pixelRatio);
+        }
+        
+        // Update dock
+        this.dock.onResize();
+        
+        // Update windows
+        this.windows.forEach(window => window.onResize());
+    }
+    
+    getMousePos(e) {
+        const rect = this.canvas.getBoundingClientRect();
+        return {
+            x: e.clientX - rect.left,
+            y: e.clientY - rect.top
+        };
+    }
+    
+    // Get window at specific screen position using direct hit testing
+    getWindowAtPos(relX, relY) {
+        // Check windows from top to bottom (reverse order)
+        for (let i = this.windows.length - 1; i >= 0; i--) {
+            const window = this.windows[i];
+            if (window.isMinimized) continue;
+            
+            if (window.isInBounds(relX, relY)) {
+                return window;
+            }
+        }
+        
+        return null;
+    }
+    
+    onMouseDown(e) {
+        const pos = this.getMousePos(e);
+        this.mouse.x = pos.x;
+        this.mouse.y = pos.y;
+        this.mouse.down = true;
+        
+        // Convert to relative coordinates
+        const relX = pos.x / window.innerWidth;
+        const relY = pos.y / window.innerHeight;
+        
+        // First, check if mouse is over a window using direct hit testing
+        const windowAtPos = this.getWindowAtPos(relX, relY);
+        
+        if (windowAtPos) {
+            // Found a window at this position
+            this.bringToFront(windowAtPos);
+            this.activeWindow = windowAtPos;
+            
+            // Check close button
+            if (windowAtPos.isInCloseButton(relX, relY)) {
+                windowAtPos.close();
+                const index = this.windows.indexOf(windowAtPos);
+                if (index > -1) {
+                    this.windows.splice(index, 1);
+                }
+                if (this.activeWindow === windowAtPos) {
+                    this.activeWindow = null;
+                }
+                return;
+            }
+            
+            // Check resize handles
+            const resizeEdge = windowAtPos.getResizeEdge(relX, relY);
+            if (resizeEdge) {
+                this.mouse.drag = {
+                    window: windowAtPos,
+                    type: 'resize',
+                    edge: resizeEdge,
+                    startX: relX,
+                    startY: relY,
+                    startWidth: windowAtPos.width,
+                    startHeight: windowAtPos.height,
+                    startPosX: windowAtPos.x,
+                    startPosY: windowAtPos.y
+                };
+                return;
+            }
+            
+            // Check title bar
+            if (windowAtPos.isInTitleBar(relX, relY)) {
+                this.mouse.drag = {
+                    window: windowAtPos,
+                    type: 'move',
+                    startX: relX,
+                    startY: relY,
+                    startPosX: windowAtPos.x,
+                    startPosY: windowAtPos.y
+                };
+                return;
+            }
+            
+            // Clicked in window content area
+            return;
+        }
+        
+        // No window at position, check dock
+        if (this.dock.isInBounds(relX, relY)) {
+            const clickedApp = this.dock.getClickedApp(relX, relY);
+            if (clickedApp) {
+                this.openApp(clickedApp);
+                return;
+            }
+        }
+        
+        // Clicked empty space
+        this.activeWindow = null;
+    }
+    
+    onMouseMove(e) {
+        const pos = this.getMousePos(e);
+        this.mouse.x = pos.x;
+        this.mouse.y = pos.y;
+        
+        // Convert to relative coordinates
+        const relX = pos.x / window.innerWidth;
+        const relY = pos.y / window.innerHeight;
+        
+        // Update hover states for all windows
+        this.windows.forEach(window => {
+            if (!window.isMinimized) {
+                window.updateHover(relX, relY);
+            }
+        });
+        
+        // Update dock hover state
+        this.dock.updateHover(relX, relY);
+        
+        // Handle dragging
+        if (this.mouse.down && this.mouse.drag) {
+            const dx = relX - this.mouse.drag.startX;
+            const dy = relY - this.mouse.drag.startY;
+            
+            if (this.mouse.drag.type === 'move') {
+                // Move window
+                let newX = this.mouse.drag.startPosX + dx;
+                let newY = this.mouse.drag.startPosY + dy;
+                
+                // Apply snapping
+                newX = this.checkSnapX(newX, this.mouse.drag.window.width);
+                newY = this.checkSnapY(newY, this.mouse.drag.window.height);
+                
+                this.mouse.drag.window.x = newX;
+                this.mouse.drag.window.y = newY;
+                
+            } else if (this.mouse.drag.type === 'resize') {
+                // Resize window
+                this.mouse.drag.window.resize(
+                    this.mouse.drag.edge,
+                    dx, dy,
+                    this.mouse.drag.startWidth,
+                    this.mouse.drag.startHeight,
+                    this.mouse.drag.startPosX,
+                    this.mouse.drag.startPosY
+                );
+                
+                // Apply snapping after resize
+                this.mouse.drag.window.x = this.checkSnapX(
+                    this.mouse.drag.window.x,
+                    this.mouse.drag.window.width
+                );
+                this.mouse.drag.window.y = this.checkSnapY(
+                    this.mouse.drag.window.y,
+                    this.mouse.drag.window.height
+                );
+            }
+        }
+        
+        // Update cursor based on current position
+        this.updateCursor(relX, relY);
+    }
+    
+    onMouseUp() {
+        this.mouse.down = false;
+        this.mouse.drag = null;
+    }
+    
+    updateCursor(relX, relY) {
+        let cursor = 'default';
+        
+        // First check if we're dragging
+        if (this.mouse.drag) {
+            cursor = this.mouse.drag.type === 'move' ? 'grabbing' : cursor;
+            return;
+        }
+        
+        // Check windows for resize cursors
+        const windowAtPos = this.getWindowAtPos(relX, relY);
+        if (windowAtPos && !windowAtPos.isMinimized) {
+            // Check resize edge
+            const edge = windowAtPos.getResizeEdge(relX, relY);
+            if (edge) {
+                switch(edge) {
+                    case 'n': case 's': cursor = 'ns-resize'; break;
+                    case 'e': case 'w': cursor = 'ew-resize'; break;
+                    case 'nw': case 'se': cursor = 'nwse-resize'; break;
+                    case 'ne': case 'sw': cursor = 'nesw-resize'; break;
+                }
+            } else if (windowAtPos.isInTitleBar(relX, relY)) {
+                cursor = 'move';
+            } else if (windowAtPos.isInCloseButton(relX, relY)) {
+                cursor = 'pointer';
+            }
+        }
+        
+        this.canvas.style.cursor = cursor;
+    }
+    
+    checkSnapX(x, width) {
+        const screenWidth = 1;
+        const threshold = this.snapThreshold;
+        
+        // Snap to left edge
+        if (Math.abs(x) < threshold) return 0;
+        
+        // Snap to right edge
+        if (Math.abs(screenWidth - (x + width)) < threshold) {
+            return screenWidth - width;
+        }
+        
+        // Snap to center horizontally
+        if (Math.abs(screenWidth/2 - (x + width/2)) < threshold) {
+            return screenWidth/2 - width/2;
+        }
+        
+        return x;
+    }
+    
+    checkSnapY(y, height) {
+        const screenHeight = 1;
+        const threshold = this.snapThreshold;
+        
+        // Snap to top edge
+        if (Math.abs(y) < threshold) return 0;
+        
+        // Snap to bottom edge (leave space for dock)
+        if (Math.abs(screenHeight - (y + height + 0.1)) < threshold) {
+            return screenHeight - height - 0.1;
+        }
+        
+        // Snap to center vertically
+        if (Math.abs(screenHeight/2 - (y + height/2)) < threshold) {
+            return screenHeight/2 - height/2;
+        }
+        
+        return y;
+    }
+    
+    bringToFront(window) {
+        const index = this.windows.indexOf(window);
+        if (index > -1 && index < this.windows.length - 1) {
+            // Only move if not already at front
+            this.windows.splice(index, 1);
+            this.windows.push(window);
+        }
+    }
+    
+    openApp(appType) {
+        console.log(`Opening ${appType} app...`);
+        
+        // Increment window counter for this app type
+        this.windowCounter[appType]++;
+        
+        // Create unique window ID
+        const windowId = `${appType}-${this.windowCounter[appType]}`;
+        
+        // Calculate position for new window
+        let x, y;
+        const existingSameType = this.windows.filter(w => w.appType === appType).length;
+        
+        if (appType === 'settings') {
+            // Settings window in center
+            x = 0.3;
+            y = 0.2;
+        } else if (existingSameType === 0) {
+            // First window of this type
+            x = appType === 'maspot' ? 0.1 : 0.55;
+            y = 0.1;
+        } else {
+            // Subsequent window - offset slightly
+            x = 0.15 + (existingSameType * 0.05);
+            y = 0.15 + (existingSameType * 0.05);
+        }
+        
+        const config = {
+            id: windowId,
+            title: appType === 'maspot' ? 'MA/SPOT ANALYSIS' : 
+                  appType === 'fund' ? 'FUND DASHBOARD' : 'WINDOW MANAGER',
+            subtitle: appType === 'maspot' ? 'Market Analytics Dashboard' : 
+                     appType === 'fund' ? 'ZSD Performance Metrics' : 'System Resources',
+            x: x,
+            y: y,
+            width: appType === 'settings' ? 0.4 : 0.35,
+            height: appType === 'settings' ? 0.6 : 0.5,
+            appType: appType,
+            accentColor: appType === 'maspot' ? '#FFFFFF' : 
+                         appType === 'fund' ? '#888888' : '#4A90E2',
+            windowNumber: this.windowCounter[appType]
+        };
+        
+        const newWindow = new FixedWindow(this, config);
+        this.windows.push(newWindow);
+        this.bringToFront(newWindow);
+        this.activeWindow = newWindow;
+        
+        console.log(`✅ ${appType} window ${this.windowCounter[appType]} opened`);
+        console.log(`Total windows: ${this.windows.length}`);
+    }
+    
+    animate(timestamp = 0) {
+        if (!this.running) return;
+        
+        // Calculate delta time
+        const deltaTime = timestamp - this.lastFrameTime || 16.67;
+        this.lastFrameTime = timestamp;
+        
+        // Update FPS
+        this.frameCount++;
+        if (timestamp - this.perfStats.lastUpdate >= 1000) {
+            this.perfStats.fps = this.frameCount;
+            this.frameCount = 0;
+            this.perfStats.lastUpdate = timestamp;
+            this.perfStats.windows = this.windows.length;
+        }
+        
+        // Clear canvas
+        this.clearCanvas();
+        
+        // Draw background
+        this.drawBackground();
+        
+        // Update and draw windows
+        this.windows.forEach(window => {
+            window.update(deltaTime);
+            window.draw(this.ctx);
+        });
+        
+        // Draw dock
+        this.dock.draw(this.ctx);
+        
+        // Draw status bar
+        this.drawStatusBar();
+        
+        // Continue animation
+        requestAnimationFrame((t) => this.animate(t));
+    }
+    
+    clearCanvas() {
+        const width = this.canvas.width / this.pixelRatio;
+        const height = this.canvas.height / this.pixelRatio;
+        
+        // Gradient background
+        const gradient = this.ctx.createLinearGradient(0, 0, 0, height);
+        gradient.addColorStop(0, '#000000');
+        gradient.addColorStop(0.5, '#0a0a0a');
+        gradient.addColorStop(1, '#000000');
+        
+        this.ctx.fillStyle = gradient;
+        this.ctx.fillRect(0, 0, width, height);
+    }
+    
+    drawBackground() {
+        const width = this.canvas.width / this.pixelRatio;
+        const height = this.canvas.height / this.pixelRatio;
+        const ctx = this.ctx;
+        
+        // Draw subtle grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.03)';
+        ctx.lineWidth = 1;
+        
+        const gridSize = 50 * this.scaleMin;
+        
+        for (let x = 0; x < width; x += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(x, 0);
+            ctx.lineTo(x, height);
+            ctx.stroke();
+        }
+        
+        for (let y = 0; y < height; y += gridSize) {
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(width, y);
+            ctx.stroke();
+        }
+        
+        // Grey radiant effect
+        ctx.save();
+        ctx.globalAlpha = 0.1;
+        
+        const centers = [
+            { x: width * 0.3, y: height * 0.3, size: width * 0.5 },
+            { x: width * 0.7, y: height * 0.7, size: width * 0.4 },
+            { x: width * 0.2, y: height * 0.8, size: width * 0.3 }
+        ];
+        
+        centers.forEach(center => {
+            const gradient = ctx.createRadialGradient(
+                center.x, center.y, 0,
+                center.x, center.y, center.size
+            );
+            gradient.addColorStop(0, 'rgba(200, 200, 200, 0.3)');
+            gradient.addColorStop(0.5, 'rgba(150, 150, 150, 0.1)');
+            gradient.addColorStop(1, 'rgba(100, 100, 100, 0)');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+        });
+        
+        ctx.restore();
+    }
+    
+    drawStatusBar() {
+        const width = this.canvas.width / this.pixelRatio;
+        const height = this.canvas.height / this.pixelRatio;
+        const ctx = this.ctx;
+        
+        // Status bar
+        const gradient = ctx.createLinearGradient(0, 0, 0, 40);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.05)');
+        gradient.addColorStop(1, 'rgba(255, 255, 255, 0.02)');
+        
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, width, 40);
+        
+        // Border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, 40);
+        ctx.lineTo(width, 40);
+        ctx.stroke();
+        
+        // Current time
+        const now = new Date();
+        const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const dateStr = now.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = `400 ${12 * this.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.fillText(timeStr, 20, 25);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.font = `300 ${10 * this.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillText(dateStr, 20, 40);
+        
+        // System status
+        ctx.textAlign = 'right';
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = `400 ${11 * this.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillText('ZAI OS', width - 20, 25);
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.font = `300 ${10 * this.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillText(`${this.perfStats.fps} FPS • ${this.windows.length} WINDOWS`, width - 20, 40);
+    }
+}
+
+// ============================================================================
+// FIXED DOCK
+// ============================================================================
+class FixedDock {
+    constructor(engine) {
+        this.engine = engine;
+        this.apps = [
+            { id: 'maspot', label: 'MA/SPOT', icon: '📈', hover: false },
+            { id: 'fund', label: 'FUND', icon: '💰', hover: false },
+            { id: 'settings', label: 'SETTINGS', icon: '⚙️', hover: false }
+        ];
+        this.height = 0.08;
+        this.padding = 0.02;
+        this.onResize();
+    }
+    
+    onResize() {
+        this.y = 1 - this.height + this.padding;
+        this.appWidth = 0.08;
+        this.appSpacing = 0.01;
+    }
+    
+    isInBounds(relX, relY) {
+        return relY >= this.y && relY <= this.y + this.height;
+    }
+    
+    getClickedApp(relX, relY) {
+        if (!this.isInBounds(relX, relY)) return null;
+        
+        const totalWidth = this.apps.length * this.appWidth + (this.apps.length - 1) * this.appSpacing;
+        const startX = (1 - totalWidth) / 2;
+        
+        for (let i = 0; i < this.apps.length; i++) {
+            const appX = startX + i * (this.appWidth + this.appSpacing);
+            if (relX >= appX && relX <= appX + this.appWidth) {
+                return this.apps[i].id;
+            }
+        }
+        return null;
+    }
+    
+    updateHover(relX, relY) {
+        if (!this.isInBounds(relX, relY)) {
+            this.apps.forEach(app => app.hover = false);
+            return;
+        }
+        
+        const totalWidth = this.apps.length * this.appWidth + (this.apps.length - 1) * this.appSpacing;
+        const startX = (1 - totalWidth) / 2;
+        
+        this.apps.forEach((app, i) => {
+            const appX = startX + i * (this.appWidth + this.appSpacing);
+            app.hover = relX >= appX && relX <= appX + this.appWidth;
+        });
+    }
+    
+    draw(ctx) {
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const absY = this.y * height;
+        const absHeight = this.height * height;
+        
+        // Dock background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.08)';
+        ctx.beginPath();
+        ctx.roundRect(0, absY, width, absHeight, 20 * this.engine.scaleMin);
+        ctx.fill();
+        
+        // Dock border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        
+        // Draw apps
+        const totalWidth = this.apps.length * this.appWidth + (this.apps.length - 1) * this.appSpacing;
+        const startX = ((1 - totalWidth) / 2) * width;
+        const appAbsWidth = this.appWidth * width;
+        
+        this.apps.forEach((app, i) => {
+            const appX = startX + i * (appAbsWidth + this.appSpacing * width);
+            const appCenterX = appX + appAbsWidth / 2;
+            const appCenterY = absY + absHeight / 2;
+            const iconSize = Math.min(appAbsWidth, absHeight) * 0.7;
+            
+            // App icon background
+            if (app.hover) {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+                ctx.shadowColor = 'rgba(255, 255, 255, 0.3)';
+                ctx.shadowBlur = 20 * this.engine.scaleMin;
+            } else {
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+                ctx.shadowColor = 'transparent';
+            }
+            
+            ctx.beginPath();
+            ctx.roundRect(
+                appCenterX - iconSize/2,
+                appCenterY - iconSize/2,
+                iconSize,
+                iconSize,
+                12 * this.engine.scaleMin
+            );
+            ctx.fill();
+            ctx.shadowColor = 'transparent';
+            
+            // App icon
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+            ctx.font = `300 ${iconSize * 0.5}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(app.icon, appCenterX, appCenterY);
+            
+            // App label
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = `300 ${10 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            ctx.fillText(app.label, appCenterX, appCenterY + iconSize/2 + 15 * this.engine.scaleMin);
+        });
+    }
+}
+
+// ============================================================================
+// FIXED WINDOW
+// ============================================================================
+class FixedWindow {
+    constructor(engine, config) {
+        this.engine = engine;
+        this.id = config.id;
+        this.title = config.title;
+        this.subtitle = config.subtitle;
+        this.x = config.x;
+        this.y = config.y;
+        this.width = config.width;
+        this.height = config.height;
+        this.appType = config.appType;
+        this.accentColor = config.accentColor;
+        this.windowNumber = config.windowNumber;
+        
+        // Window state
+        this.isMinimized = false;
+        this.isMaximized = false;
+        this.closeHovered = false;
+        this.hoverEdge = null;
+        
+        // Memory usage simulation
+        this.memoryUsage = Math.floor(Math.random() * 50) + 10; // MB
+        
+        // Resize handle size
+        this.resizeHandleSize = 0.01;
+        
+        // Create app content
+        this.app = this.appType === 'maspot' ? 
+            new FixedMASpotGraph(this) : 
+            this.appType === 'fund' ? 
+            new FixedFundGraph(this) : 
+            new FixedSettingsWindow(this);
+        
+        // Window constraints
+        this.minWidth = 0.2;
+        this.minHeight = 0.15;
+        this.maxWidth = 0.9;
+        this.maxHeight = 0.8;
+        
+        // Calculate title bar height
+        this.titleBarHeight = Math.max(40, 40 * this.engine.scaleMin) / window.innerHeight;
+    }
+    
+    onResize() {
+        // Update title bar height
+        this.titleBarHeight = Math.max(40, 40 * this.engine.scaleMin) / window.innerHeight;
+        
+        // Keep window on screen
+        this.x = Math.max(0, Math.min(1 - this.width, this.x));
+        this.y = Math.max(0, Math.min(1 - this.height, this.y));
+        this.width = Math.max(this.minWidth, Math.min(this.maxWidth, this.width));
+        this.height = Math.max(this.minHeight, Math.min(this.maxHeight, this.height));
+    }
+    
+    isInBounds(relX, relY) {
+        if (this.isMinimized) return false;
+        return relX >= this.x && relX <= this.x + this.width &&
+               relY >= this.y && relY <= this.y + this.height;
+    }
+    
+    isInTitleBar(relX, relY) {
+        if (this.isMinimized) return false;
+        return relX >= this.x && relX <= this.x + this.width &&
+               relY >= this.y && relY <= this.y + this.titleBarHeight;
+    }
+    
+    isInCloseButton(relX, relY) {
+        if (this.isMinimized) return false;
+        const absX = relX * window.innerWidth;
+        const absY = relY * window.innerHeight;
+        const closeX = (this.x + this.width) * window.innerWidth - 40 * this.engine.scaleMin;
+        const closeY = this.y * window.innerHeight + 15 * this.engine.scaleMin;
+        const closeSize = 20 * this.engine.scaleMin;
+        
+        return absX >= closeX && absX <= closeX + closeSize &&
+               absY >= closeY && absY <= closeY + closeSize;
+    }
+    
+    getResizeEdge(relX, relY) {
+        if (this.isMinimized || this.isMaximized) return null;
+        
+        const edgeThreshold = this.resizeHandleSize;
+        
+        // Check corners
+        if (relX <= this.x + edgeThreshold && relY <= this.y + edgeThreshold) return 'nw';
+        if (relX >= this.x + this.width - edgeThreshold && relY <= this.y + edgeThreshold) return 'ne';
+        if (relX <= this.x + edgeThreshold && relY >= this.y + this.height - edgeThreshold) return 'sw';
+        if (relX >= this.x + this.width - edgeThreshold && relY >= this.y + this.height - edgeThreshold) return 'se';
+        
+        // Check edges
+        if (relX <= this.x + edgeThreshold) return 'w';
+        if (relX >= this.x + this.width - edgeThreshold) return 'e';
+        if (relY <= this.y + edgeThreshold) return 'n';
+        if (relY >= this.y + this.height - edgeThreshold) return 's';
+        
+        return null;
+    }
+    
+    updateHover(relX, relY) {
+        this.closeHovered = this.isInCloseButton(relX, relY);
+        this.hoverEdge = this.getResizeEdge(relX, relY);
+    }
+    
+    resize(edge, dx, dy, startWidth, startHeight, startX, startY) {
+        const minSize = 0.05;
+        
+        switch(edge) {
+            case 'n':
+                this.height = Math.max(minSize, Math.min(this.maxHeight, startHeight - dy));
+                this.y = startY + dy;
+                break;
+            case 's':
+                this.height = Math.max(minSize, Math.min(this.maxHeight, startHeight + dy));
+                break;
+            case 'w':
+                this.width = Math.max(minSize, Math.min(this.maxWidth, startWidth - dx));
+                this.x = startX + dx;
+                break;
+            case 'e':
+                this.width = Math.max(minSize, Math.min(this.maxWidth, startWidth + dx));
+                break;
+            case 'nw':
+                this.width = Math.max(minSize, Math.min(this.maxWidth, startWidth - dx));
+                this.height = Math.max(minSize, Math.min(this.maxHeight, startHeight - dy));
+                this.x = startX + dx;
+                this.y = startY + dy;
+                break;
+            case 'ne':
+                this.width = Math.max(minSize, Math.min(this.maxWidth, startWidth + dx));
+                this.height = Math.max(minSize, Math.min(this.maxHeight, startHeight - dy));
+                this.y = startY + dy;
+                break;
+            case 'sw':
+                this.width = Math.max(minSize, Math.min(this.maxWidth, startWidth - dx));
+                this.height = Math.max(minSize, Math.min(this.maxHeight, startHeight + dy));
+                this.x = startX + dx;
+                break;
+            case 'se':
+                this.width = Math.max(minSize, Math.min(this.maxWidth, startWidth + dx));
+                this.height = Math.max(minSize, Math.min(this.maxHeight, startHeight + dy));
+                break;
+        }
+        
+        // Keep window on screen
+        this.x = Math.max(0, Math.min(1 - this.width, this.x));
+        this.y = Math.max(0, Math.min(1 - this.height, this.y));
+    }
+    
+    close() {
+        this.app.cleanup();
+        console.log(`Closed window: ${this.id}`);
+    }
+    
+    update(deltaTime) {
+        if (!this.isMinimized) {
+            this.app.update(deltaTime);
+            
+            // Simulate memory usage fluctuation
+            if (Math.random() < 0.01) {
+                this.memoryUsage = Math.floor(Math.random() * 50) + 10;
+            }
+        }
+    }
+    
+    draw(ctx) {
+        if (this.isMinimized) return;
+        
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+        const absX = this.x * width;
+        const absY = this.y * height;
+        const absWidth = this.width * width;
+        const absHeight = this.height * height;
+        
+        // Calculate absolute title bar height
+        const titleBarHeight = Math.max(40, 40 * this.engine.scaleMin);
+        
+        // Window shadow
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+        ctx.shadowBlur = 30 * this.engine.scaleMin;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 10 * this.engine.scaleMin;
+        
+        // Window background
+        ctx.fillStyle = 'rgba(25, 25, 25, 0.98)';
+        ctx.beginPath();
+        ctx.roundRect(absX, absY, absWidth, absHeight, 12 * this.engine.scaleMin);
+        ctx.fill();
+        
+        ctx.restore();
+        
+        // Title bar gradient
+        const titleGradient = ctx.createLinearGradient(absX, absY, absX, absY + titleBarHeight);
+        titleGradient.addColorStop(0, 'rgba(200, 200, 200, 0.1)');
+        titleGradient.addColorStop(0.5, 'rgba(150, 150, 150, 0.05)');
+        titleGradient.addColorStop(1, 'rgba(100, 100, 100, 0.02)');
+        
+        ctx.fillStyle = titleGradient;
+        ctx.beginPath();
+        ctx.roundRect(absX, absY, absWidth, titleBarHeight, 
+                      12 * this.engine.scaleMin, 12 * this.engine.scaleMin, 0, 0);
+        ctx.fill();
+        
+        // Active window indicator (blue line)
+        if (this.engine.activeWindow === this) {
+            ctx.fillStyle = '#4A90E2';
+            ctx.fillRect(absX, absY, absWidth, 3 * this.engine.scaleMin);
+        }
+        
+        // Title bar border
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(absX, absY + titleBarHeight);
+        ctx.lineTo(absX + absWidth, absY + titleBarHeight);
+        ctx.stroke();
+        
+        // Window title with number if multiple windows
+        const title = this.windowNumber > 1 ? 
+            `${this.title} (${this.windowNumber})` : this.title;
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = `500 ${14 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(title, absX + 20, absY + titleBarHeight/2);
+        
+        // Window subtitle
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.font = `300 ${11 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillText(this.subtitle, absX + 20, absY + titleBarHeight/2 + 20);
+        
+        // Memory usage indicator
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.font = `300 ${10 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.fillText(`${this.memoryUsage} MB`, absX + absWidth - 60, absY + titleBarHeight/2);
+        
+        // Close button
+        const closeX = absX + absWidth - 40 * this.engine.scaleMin;
+        const closeY = absY + 15 * this.engine.scaleMin;
+        const closeSize = 20 * this.engine.scaleMin;
+        
+        ctx.fillStyle = this.closeHovered ? 'rgba(255, 59, 48, 0.8)' : 'rgba(255, 59, 48, 0.4)';
+        ctx.beginPath();
+        ctx.roundRect(closeX, closeY, closeSize, closeSize, 4 * this.engine.scaleMin);
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.font = `bold ${12 * this.engine.scaleMin}px Arial`;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('×', closeX + closeSize/2, closeY + closeSize/2);
+        
+        // Content area
+        const contentX = absX;
+        const contentY = absY + titleBarHeight;
+        const contentWidth = absWidth;
+        const contentHeight = absHeight - titleBarHeight;
+        
+        // Draw app content
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(contentX, contentY, contentWidth, contentHeight);
+        ctx.clip();
+        
+        this.app.draw(ctx, contentX, contentY, contentWidth, contentHeight);
+        ctx.restore();
+        
+        // Draw resize handles only when mouse is over THIS window
+        if (this.hoverEdge && !this.isMaximized && this.engine.activeWindow === this) {
+            const handleSize = 8 * this.engine.scaleMin;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+            
+            // Draw corner handles
+            ctx.fillRect(absX, absY, handleSize, handleSize);
+            ctx.fillRect(absX + absWidth - handleSize, absY, handleSize, handleSize);
+            ctx.fillRect(absX, absY + absHeight - handleSize, handleSize, handleSize);
+            ctx.fillRect(absX + absWidth - handleSize, absY + absHeight - handleSize, handleSize, handleSize);
+        }
+    }
+}
+
+// ============================================================================
+// SIMPLE GRAPH CLASSES
+// ============================================================================
+class BaseFixedGraph {
+    constructor(window) {
+        this.window = window;
+        this.engine = window.engine;
+        this.data = [];
+        this.lastUpdate = 0;
+        this.generateInitialData();
+    }
+    
+    generateInitialData() {
+        const baseValue = this.window.appType === 'maspot' ? 25000 : 1000;
+        for (let i = 0; i < 100; i++) {
+            this.data.push({
+                block: 1000000 + i * 100,
+                value: baseValue + (Math.random() - 0.5) * baseValue * 0.2,
+                timestamp: Date.now() - (100 - i) * 60000
+            });
+        }
+    }
+    
+    update(deltaTime) {
+        const now = Date.now();
+        if (now - this.lastUpdate > 1000) {
+            this.updateData();
+            this.lastUpdate = now;
+        }
+    }
+    
+    updateData() {
+        if (this.data.length === 0) return;
+        
+        const baseValue = this.window.appType === 'maspot' ? 25000 : 1000;
+        const lastValue = this.data[this.data.length - 1].value;
+        const change = (Math.random() - 0.5) * 0.02;
+        const newValue = Math.max(baseValue * 0.5, Math.min(baseValue * 1.5, lastValue * (1 + change)));
+        
+        this.data.push({
+            block: this.data[this.data.length - 1].block + 100,
+            value: newValue,
+            timestamp: Date.now()
+        });
+        
+        if (this.data.length > 200) {
+            this.data.shift();
+        }
+    }
+    
+    formatValue(value) {
+        const isMASpot = this.window.appType === 'maspot';
+        const prefix = isMASpot ? '$' : '$';
+        const suffix = isMASpot ? '' : ' ZSD';
+        return `${prefix}${value.toLocaleString('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        })}${suffix}`;
+    }
+    
+    draw(ctx, x, y, width, height) {
+        // Background
+        ctx.fillStyle = 'rgba(30, 30, 35, 0.9)';
+        ctx.fillRect(x, y, width, height);
+        
+        if (this.data.length < 2) return;
+        
+        // Calculate bounds
+        const values = this.data.map(d => d.value);
+        const minValue = Math.min(...values) * 0.99;
+        const maxValue = Math.max(...values) * 1.01;
+        const valueRange = Math.max(0.0001, maxValue - minValue);
+        
+        // Draw grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 1;
+        
+        // Horizontal grid
+        for (let i = 0; i <= 5; i++) {
+            const lineY = y + (i * height / 5);
+            ctx.beginPath();
+            ctx.moveTo(x, lineY);
+            ctx.lineTo(x + width, lineY);
+            ctx.stroke();
+            
+            // Grid labels
+            const value = maxValue - (i * valueRange / 5);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.font = `300 ${10 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+            ctx.textAlign = 'right';
+            ctx.fillText(this.formatValue(value), x - 8, lineY + 3);
+        }
+        
+        // Vertical grid
+        for (let i = 0; i <= 5; i++) {
+            const lineX = x + (i * width / 5);
+            ctx.beginPath();
+            ctx.moveTo(lineX, y);
+            ctx.lineTo(lineX, y + height);
+            ctx.stroke();
+        }
+        
+        // Draw graph line
+        ctx.beginPath();
+        for (let i = 0; i < this.data.length; i++) {
+            const point = this.data[i];
+            const pointX = x + (i / (this.data.length - 1)) * width;
+            const pointY = y + ((maxValue - point.value) / valueRange) * height;
+            
+            if (i === 0) {
+                ctx.moveTo(pointX, pointY);
+            } else {
+                ctx.lineTo(pointX, pointY);
+            }
+        }
+        
+        // Line gradient
+        const gradient = ctx.createLinearGradient(x, y, x, y + height);
+        gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+        gradient.addColorStop(0.5, 'rgba(200, 200, 200, 0.6)');
+        gradient.addColorStop(1, 'rgba(150, 150, 150, 0.3)');
+        
+        ctx.strokeStyle = gradient;
+        ctx.lineWidth = 2 * this.engine.scaleMin;
+        ctx.lineJoin = 'round';
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        
+        // Draw current value
+        const lastPoint = this.data[this.data.length - 1];
+        const lastX = x + width;
+        const lastY = y + ((maxValue - lastPoint.value) / valueRange) * height;
+        
+        // Value indicator
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 15 * this.engine.scaleMin, 0, Math.PI * 2);
+        ctx.fill();
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(lastX, lastY, 6 * this.engine.scaleMin, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Value label
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.95)';
+        ctx.font = `600 ${18 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(this.formatValue(lastPoint.value), lastX - 20, lastY);
+        
+        // Axis labels
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.font = `400 ${11 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('BLOCK', x + width/2, y + height - 10);
+        
+        // Y-axis label
+        ctx.save();
+        ctx.translate(x + 15, y + height/2);
+        ctx.rotate(-Math.PI/2);
+        ctx.fillText(this.window.appType === 'maspot' ? 'PRICE (USD)' : '$ZSD', 0, 0);
+        ctx.restore();
+    }
+    
+    cleanup() {
+        // Cleanup
+    }
+}
+
+class FixedMASpotGraph extends BaseFixedGraph {
+    // Inherits everything
+}
+
+class FixedFundGraph extends BaseFixedGraph {
+    // Inherits everything
+}
+
+class FixedSettingsWindow {
+    constructor(window) {
+        this.window = window;
+        this.engine = window.engine;
+        this.lastUpdate = 0;
+    }
+    
+    update(deltaTime) {
+        // Update settings window data
+    }
+    
+    draw(ctx, x, y, width, height) {
+        // Background
+        ctx.fillStyle = 'rgba(30, 30, 35, 0.9)';
+        ctx.fillRect(x, y, width, height);
+        
+        // Title
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = `600 ${18 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('WINDOW MANAGER', x + width/2, y + 40);
+        
+        // Window list
+        ctx.font = `400 ${14 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'left';
+        
+        const startY = y + 80;
+        const lineHeight = 30;
+        
+        // Draw header
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fillText('Active Windows:', x + 20, startY);
+        
+        // Draw window list
+        this.engine.windows.forEach((window, index) => {
+            const isActive = this.engine.activeWindow === window;
+            const yPos = startY + (index + 1) * lineHeight;
+            
+            // Highlight active window
+            if (isActive) {
+                ctx.fillStyle = 'rgba(74, 144, 226, 0.2)';
+                ctx.fillRect(x + 10, yPos - 15, width - 20, 25);
+            }
+            
+            // Window info
+            ctx.fillStyle = isActive ? 'rgba(255, 255, 255, 0.9)' : 'rgba(255, 255, 255, 0.6)';
+            ctx.fillText(`${window.title} (${window.memoryUsage} MB)`, x + 30, yPos);
+            
+            // Active indicator
+            if (isActive) {
+                ctx.fillStyle = '#4A90E2';
+                ctx.beginPath();
+                ctx.arc(x + 20, yPos - 5, 4, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        });
+        
+        // System resources
+        const resourcesY = startY + (this.engine.windows.length + 2) * lineHeight;
+        
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fillText('System Resources:', x + 20, resourcesY);
+        
+        // Memory usage bar
+        const totalMemory = 512; // MB
+        const usedMemory = this.engine.windows.reduce((sum, window) => sum + window.memoryUsage, 0);
+        const memoryPercent = usedMemory / totalMemory;
+        
+        // Memory bar background
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.fillRect(x + 20, resourcesY + 20, width - 40, 20);
+        
+        // Memory bar fill
+        const gradient = ctx.createLinearGradient(x + 20, 0, x + 20 + (width - 40) * memoryPercent, 0);
+        gradient.addColorStop(0, '#4A90E2');
+        gradient.addColorStop(1, '#5DADE2');
+        ctx.fillStyle = gradient;
+        ctx.fillRect(x + 20, resourcesY + 20, (width - 40) * memoryPercent, 20);
+        
+        // Memory text
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.font = `300 ${12 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText(`${usedMemory} MB / ${totalMemory} MB (${Math.round(memoryPercent * 100)}%)`, x + width/2, resourcesY + 35);
+        
+        // Performance metrics
+        const metricsY = resourcesY + 70;
+        ctx.textAlign = 'left';
+        ctx.font = `400 ${14 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+        ctx.fillText('Performance:', x + 20, metricsY);
+        
+        ctx.font = `300 ${12 * this.engine.scaleMin}px -apple-system, BlinkMacSystemFont, sans-serif`;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fillText(`FPS: ${this.engine.perfStats.fps}`, x + 30, metricsY + 25);
+        ctx.fillText(`Windows: ${this.engine.windows.length}`, x + 30, metricsY + 45);
+        
+        // Z logo
+        const logoSize = 80 * this.engine.scaleMin;
+        const logoX = x + width/2 - logoSize/2;
+        const logoY = y + height - logoSize - 30;
+        
+        // Draw Z logo
+        ctx.save();
+        ctx.strokeStyle = '#4A90E2';
+        ctx.lineWidth = 8 * this.engine.scaleMin;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        
+        // Draw Z shape
+        ctx.beginPath();
+        ctx.moveTo(logoX, logoY);
+        ctx.lineTo(logoX + logoSize, logoY);
+        ctx.lineTo(logoX, logoY + logoSize);
+        ctx.lineTo(logoX + logoSize, logoY + logoSize);
+        ctx.stroke();
+        
+        ctx.restore();
+    }
+    
+    cleanup() {
+        // Cleanup
+    }
+}
+
+// ============================================================================
+// INITIALIZE ENGINE
+// ============================================================================
+window.addEventListener('load', () => {
+    console.log("🚀 Launching ZAI OS with Improved Focus Management...");
+    
+    try {
+        // Initialize the fixed engine
+        const zaiEngine = new ZAIFixedEngine();
+        window.zaiEngine = zaiEngine;
+        
+        // REMOVED auto-opening of windows
+        // Now you can open windows by clicking the dock icons
+        
+        console.log("✅ ZAI OS successfully launched - Click dock icons to open windows");
+        
+    } catch (error) {
+        console.error("❌ Failed to initialize ZAI OS:", error);
+        document.getElementById('loading').innerHTML = 
+            `<div style="color: #ff453a;">Error: ${error.message}</div>`;
+    }
+});
     </script>
 </body>
 </html>
